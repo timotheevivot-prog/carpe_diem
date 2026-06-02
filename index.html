@@ -1,0 +1,2160 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Carpe Diem — Cap sur la Polynésie 🌊</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛵</text></svg>"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <style>
+    :root {
+      --sand:#f5e6c8; --sand-light:#fdf6e8;
+      --ocean:#2a7d8c; --ocean-deep:#1a5566;
+      --coral:#d4755a; --coral-light:#e8a088;
+      --palm:#4a7c59; --text:#3a2e22; --text-light:#6b5a45;
+      --white:#fffdf8; --card-bg:#fffdf8; --nav-bg:rgba(245,230,200,0.95); --body-bg:#fdf6e8;
+    }
+    [data-theme="dark"] {
+      --sand:#2a2218; --sand-light:#1a1610;
+      --ocean:#3a9dae; --ocean-deep:#4abccc;
+      --coral:#e8896a; --coral-light:#f0aa8a;
+      --text:#e8dcc8; --text-light:#b8a890;
+      --white:#252015; --card-bg:#252015; --nav-bg:rgba(26,22,16,0.97); --body-bg:#1a1610;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Lora',Georgia,serif;background:var(--body-bg);color:var(--text);overflow-x:hidden;transition:background 0.4s,color 0.4s;}
+
+    /* ONGLETS PRINCIPAUX */
+    .tab-panel{display:none;}
+    .tab-panel.active{display:block;animation:fadeIn 0.3s ease;}
+    nav a.main-tab{text-decoration:none;color:var(--text-light);font-size:0.85rem;letter-spacing:0.07em;text-transform:uppercase;padding:1rem 1.2rem;white-space:nowrap;transition:color 0.2s;border-bottom:3px solid transparent;cursor:pointer;}
+    nav a.main-tab.active{color:var(--coral);border-bottom-color:var(--coral);}
+    nav a.main-tab:hover{color:var(--coral);}
+
+    .escale-articles{margin-top:1.5rem;}
+    .escale-articles .article-card{margin-bottom:1rem;}
+
+    /* PUBLISH FORM */
+    .publish-form{background:var(--card-bg);border-radius:20px;padding:2rem;box-shadow:0 4px 30px rgba(42,125,140,0.08);border-left:5px solid var(--ocean);transition:background 0.4s;}
+    .publish-form h3{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--ocean-deep);margin-bottom:1.5rem;}
+    .form-group{margin-bottom:1rem;}
+    .form-group label{display:block;font-size:0.85rem;color:var(--text-light);margin-bottom:0.4rem;font-weight:600;letter-spacing:0.04em;}
+    .form-group input,.form-group textarea,.form-group select{width:100%;padding:0.75rem 1rem;border:2px solid var(--sand);border-radius:12px;font-family:'Lora',serif;font-size:0.95rem;color:var(--text);background:var(--body-bg);outline:none;transition:border-color 0.2s,background 0.4s,color 0.4s;}
+    .form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:var(--ocean);}
+    .form-group textarea{height:100px;resize:vertical;}
+    .btn-send{background:linear-gradient(135deg,var(--coral),var(--coral-light));color:white;border:none;border-radius:30px;padding:0.75rem 2rem;font-family:'Lora',serif;font-size:0.95rem;font-weight:600;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;}
+    .btn-send:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(212,117,90,0.35);}
+
+    /* ARTICLE CARD */
+    .article-card{background:var(--card-bg);border-radius:20px;overflow:hidden;box-shadow:0 4px 30px rgba(42,125,140,0.08);margin-bottom:2rem;transition:transform 0.3s,box-shadow 0.3s,background 0.4s;}
+    .article-card:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(42,125,140,0.15);}
+
+    /* LOADER */
+    #loader{position:fixed;inset:0;background:linear-gradient(160deg,#0d4a5e,#1a7a8a,#2aaa99);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.8s ease;}
+    #loader.hide{opacity:0;pointer-events:none;}
+    .loader-boat{font-size:4rem;animation:loaderFloat 2s ease-in-out infinite;margin-bottom:1.5rem;}
+    @keyframes loaderFloat{0%,100%{transform:translateY(0) rotate(-3deg);}50%{transform:translateY(-15px) rotate(3deg);}}
+    .loader-wave{width:200px;height:4px;background:rgba(255,255,255,0.3);border-radius:2px;overflow:hidden;margin-top:1.5rem;}
+    .loader-wave-fill{height:100%;background:white;border-radius:2px;animation:loadFill 2s ease forwards;}
+    @keyframes loadFill{from{width:0}to{width:100%}}
+    .loader-text{color:rgba(255,255,255,0.8);font-style:italic;font-size:1rem;margin-top:1rem;letter-spacing:0.05em;}
+
+    /* HEADER */
+    header{position:relative;min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;overflow:hidden;background:linear-gradient(160deg,#0d4a5e 0%,#1a7a8a 40%,#2aaa99 70%,#4abba8 100%);}
+    .wave-overlay{position:absolute;bottom:0;left:0;right:0;height:180px;background:var(--body-bg);clip-path:ellipse(55% 100% at 50% 100%);transition:background 0.4s;}
+    .stars{position:absolute;inset:0;pointer-events:none;}
+    .star{position:absolute;border-radius:50%;background:rgba(255,255,255,0.7);animation:twinkle 3s infinite alternate;}
+    @keyframes twinkle{from{opacity:0.3;transform:scale(0.8);}to{opacity:1;transform:scale(1.2);}}
+    .boat-emoji{font-size:4rem;animation:float 4s ease-in-out infinite;margin-bottom:1.5rem;position:relative;z-index:2;}
+    @keyframes float{0%,100%{transform:translateY(0) rotate(-2deg);}50%{transform:translateY(-12px) rotate(2deg);}}
+    .header-content{position:relative;z-index:2;padding:2rem;}
+    header h1{font-family:'Playfair Display',serif;font-size:clamp(2.8rem,7vw,5.5rem);color:#fffdf8;font-weight:700;line-height:1.1;text-shadow:0 4px 20px rgba(0,0,0,0.3);margin-bottom:1rem;}
+    header h1 em{color:#ffe08a;font-style:italic;}
+    .subtitle{font-style:italic;font-size:1.25rem;color:rgba(255,255,255,0.88);max-width:480px;margin:0 auto 2rem;line-height:1.6;}
+    .coords{display:inline-flex;align-items:center;gap:0.5rem;background:rgba(255,255,255,0.15);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.3);border-radius:30px;padding:0.5rem 1.2rem;color:#fffdf8;font-size:0.9rem;letter-spacing:0.05em;}
+    .scroll-hint{position:absolute;bottom:210px;left:50%;transform:translateX(-50%);z-index:2;display:flex;flex-direction:column;align-items:center;gap:0.4rem;color:rgba(255,255,255,0.7);font-size:0.8rem;letter-spacing:0.1em;text-transform:uppercase;animation:fadeIn 2s ease 2.5s both;}
+    .scroll-arrow{width:20px;height:20px;border-right:2px solid rgba(255,255,255,0.6);border-bottom:2px solid rgba(255,255,255,0.6);transform:rotate(45deg);animation:bounce 1.5s infinite;}
+    @keyframes bounce{0%,100%{transform:rotate(45deg) translateY(0);}50%{transform:rotate(45deg) translateY(6px);}}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+    /* DARK TOGGLE */
+    .dark-toggle{position:fixed;top:1rem;right:1rem;z-index:200;background:var(--card-bg);border:2px solid var(--sand);border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.2rem;box-shadow:0 2px 12px rgba(0,0,0,0.15);transition:background 0.3s,border 0.3s;}
+    .dark-toggle:hover{transform:scale(1.1);}
+
+    /* STATS */
+    .stats-banner{background:linear-gradient(135deg,var(--ocean-deep),var(--ocean));padding:1.5rem 2rem;display:flex;justify-content:center;flex-wrap:wrap;gap:2rem;}
+    .stat-item{text-align:center;color:white;}
+    .stat-value{display:block;font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:700;line-height:1;}
+    .stat-label{font-size:0.75rem;text-transform:uppercase;letter-spacing:0.1em;opacity:0.75;margin-top:0.2rem;}
+
+    /* NAV */
+    nav{position:sticky;top:0;background:var(--nav-bg);backdrop-filter:blur(12px);border-bottom:2px solid var(--coral-light);z-index:100;display:flex;justify-content:center;overflow-x:auto;transition:background 0.4s;}
+    nav a{text-decoration:none;color:var(--text-light);font-size:0.85rem;letter-spacing:0.07em;text-transform:uppercase;padding:1rem 1.2rem;white-space:nowrap;transition:color 0.2s;border-bottom:3px solid transparent;}
+    nav a:hover{color:var(--coral);border-bottom-color:var(--coral);}
+
+    /* MAIN */
+    main{max-width:820px;margin:0 auto;padding:3rem 1.5rem 5rem;}
+    .section-title{font-family:'Playfair Display',serif;font-size:2rem;color:var(--ocean-deep);margin-bottom:0.4rem;display:flex;align-items:center;gap:0.6rem;}
+    .section-divider{width:60px;height:3px;background:linear-gradient(90deg,var(--coral),var(--coral-light));border-radius:2px;margin-bottom:2rem;}
+
+    /* À PROPOS */
+    .about-box{background:var(--card-bg);border-radius:20px;padding:2.5rem;border-left:5px solid var(--coral);box-shadow:0 4px 30px rgba(42,125,140,0.08);margin-bottom:3.5rem;transition:background 0.4s;}
+    .about-box p{font-size:1.08rem;line-height:1.9;margin-bottom:1rem;}
+    .about-box p:last-child{margin-bottom:0;}
+    .route-badges{display:flex;flex-wrap:wrap;gap:0.6rem;margin-top:1.5rem;}
+    .badge{background:linear-gradient(135deg,var(--ocean),var(--ocean-deep));color:white;border-radius:20px;padding:0.35rem 0.9rem;font-size:0.82rem;font-weight:600;letter-spacing:0.04em;}
+
+    /* ARTICLES */
+    #journal{margin-bottom:3.5rem;}
+    .article-card{background:var(--card-bg);border-radius:20px;overflow:hidden;box-shadow:0 4px 30px rgba(42,125,140,0.08);margin-bottom:2rem;transition:transform 0.3s,box-shadow 0.3s,background 0.4s;cursor:pointer;}
+    .article-card:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(42,125,140,0.15);}
+    .card-banner{height:200px;display:flex;align-items:center;justify-content:center;font-size:4.5rem;position:relative;overflow:hidden;}
+    .card-banner::before{content:'';position:absolute;inset:0;opacity:0.3;background:radial-gradient(circle at 30% 50%,white 0%,transparent 70%);}
+    .bg-ocean{background:linear-gradient(135deg,#0d4a5e,#2aaa99);}
+    .bg-sunset{background:linear-gradient(135deg,#c9502a,#f4a460);}
+    .bg-island{background:linear-gradient(135deg,#2d6a4f,#74c69d);}
+    .bg-night{background:linear-gradient(135deg,#1a1a3e,#4a4a9a);}
+    .card-body{padding:1.8rem 2rem 2rem;}
+    .card-meta{display:flex;align-items:center;gap:0.8rem;margin-bottom:0.8rem;}
+    .card-date{font-size:0.8rem;color:var(--text-light);text-transform:uppercase;letter-spacing:0.08em;}
+    .card-tag{font-size:0.75rem;background:var(--sand);color:var(--coral);border-radius:12px;padding:0.2rem 0.7rem;font-weight:600;}
+    .card-body h2{font-family:'Playfair Display',serif;font-size:1.5rem;color:var(--ocean-deep);margin-bottom:0.8rem;line-height:1.3;}
+    .card-body p{color:var(--text-light);line-height:1.8;font-size:0.98rem;}
+    .read-more{display:inline-flex;align-items:center;gap:0.4rem;margin-top:1.2rem;color:var(--coral);font-weight:600;font-size:0.9rem;text-decoration:none;transition:gap 0.2s;}
+    .read-more:hover{gap:0.8rem;}
+
+    /* GALERIE */
+    #photos{margin-bottom:3.5rem;}
+    .photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;}
+    .photo-placeholder{border-radius:14px;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.5rem;font-size:2.2rem;cursor:pointer;transition:transform 0.25s;position:relative;overflow:hidden;}
+    .photo-placeholder:hover{transform:scale(1.04);}
+    .photo-placeholder span{font-size:0.8rem;color:rgba(255,255,255,0.9);font-style:italic;}
+    .photo-placeholder::after{content:'🔍 Voir';position:absolute;inset:0;background:rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;color:white;font-family:'Lora',serif;font-size:0.85rem;opacity:0;transition:opacity 0.2s;}
+    .photo-placeholder:hover::after{opacity:1;}
+    .ph-1{background:linear-gradient(135deg,#2aaa99,#0d4a5e);}
+    .ph-2{background:linear-gradient(135deg,#f4a460,#c9502a);}
+    .ph-3{background:linear-gradient(135deg,#74c69d,#2d6a4f);}
+    .ph-4{background:linear-gradient(135deg,#4a4a9a,#1a1a3e);}
+    .ph-5{background:linear-gradient(135deg,#d4755a,#3a2e22);}
+    .ph-6{background:linear-gradient(135deg,#1a7a8a,#4abba8);}
+
+    /* LIGHTBOX */
+    .lightbox{position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:1000;display:none;align-items:center;justify-content:center;flex-direction:column;}
+    .lightbox.open{display:flex;animation:fadeIn 0.3s ease;}
+    .lightbox img{max-width:90vw;max-height:80vh;border-radius:12px;object-fit:contain;box-shadow:0 20px 60px rgba(0,0,0,0.5);}
+    .lightbox-close{position:absolute;top:1.5rem;right:1.5rem;color:white;font-size:2rem;cursor:pointer;background:rgba(255,255,255,0.15);border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;transition:background 0.2s;}
+    .lightbox-close:hover{background:rgba(255,255,255,0.3);}
+    .lightbox-nav{position:absolute;top:50%;transform:translateY(-50%);color:white;font-size:2rem;cursor:pointer;background:rgba(255,255,255,0.15);border-radius:50%;width:48px;height:48px;display:flex;align-items:center;justify-content:center;transition:background 0.2s;}
+    .lightbox-nav:hover{background:rgba(255,255,255,0.3);}
+    .lightbox-prev{left:1rem;} .lightbox-next{right:1rem;}
+    .lightbox-caption{color:rgba(255,255,255,0.8);font-style:italic;margin-top:1rem;font-size:0.95rem;}
+    .lightbox-dots{display:flex;gap:0.5rem;margin-top:0.8rem;}
+    .lightbox-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.4);cursor:pointer;transition:background 0.2s;}
+    .lightbox-dot.active{background:white;}
+
+    /* MAP TABS */
+    .map-tabs{display:flex;gap:0.5rem;margin-bottom:1rem;}
+    .map-tab{background:var(--sand);border:none;border-radius:30px;padding:0.5rem 1.2rem;font-family:'Lora',serif;font-size:0.85rem;color:var(--text-light);cursor:pointer;transition:all 0.2s;}
+    .map-tab.active{background:var(--ocean);color:white;}
+    .map-tab:hover:not(.active){background:var(--ocean);color:white;}
+
+    /* CARTE */
+    #position{margin-bottom:3.5rem;}
+    #map{height:420px;border-radius:20px;overflow:hidden;box-shadow:0 4px 30px rgba(42,125,140,0.15);margin-bottom:1.5rem;min-height:420px;}
+    .position-card{background:linear-gradient(135deg,var(--ocean-deep),var(--ocean));border-radius:20px;padding:2rem 2.5rem;color:white;position:relative;overflow:hidden;}
+    .position-card::before{content:'🌍';position:absolute;right:1.5rem;top:50%;transform:translateY(-50%);font-size:5rem;opacity:0.15;}
+    .position-card h3{font-family:'Playfair Display',serif;font-size:1.4rem;margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem;}
+    .position-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1.2rem;}
+    .pos-item label{display:block;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.1em;opacity:0.7;margin-bottom:0.2rem;}
+    .pos-item strong{font-size:1.1rem;font-family:'Playfair Display',serif;}
+    .distance-bar-wrap{background:rgba(255,255,255,0.15);border-radius:30px;padding:1rem 1.5rem;margin-top:1.2rem;}
+    .distance-bar-label{display:flex;justify-content:space-between;font-size:0.82rem;opacity:0.85;margin-bottom:0.5rem;}
+    .distance-bar{height:8px;background:rgba(255,255,255,0.2);border-radius:4px;overflow:hidden;}
+    .distance-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,#ffe08a,#fff);transition:width 1.5s ease;}
+
+    /* ESTIMATIONS */
+    .eta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-top:1.5rem;border-top:1px solid rgba(255,255,255,0.15);padding-top:1.5rem;}
+    .eta-item{background:rgba(255,255,255,0.1);border-radius:14px;padding:1rem 1.2rem;}
+    .eta-dest{font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;margin-bottom:0.3rem;}
+    .eta-distance{font-size:0.78rem;opacity:0.7;margin-bottom:0.4rem;}
+    .eta-date{font-size:1rem;color:#ffe08a;font-weight:600;}
+    .eta-days{font-size:0.78rem;opacity:0.75;margin-top:0.2rem;}
+
+    /* MÉTÉO */
+    .weather-bar {
+      background: linear-gradient(135deg, #0d3d4f, #1a6575);
+      padding: 1rem 2rem;
+      display: flex; justify-content: center; align-items: center;
+      flex-wrap: wrap; gap: 1.5rem;
+      border-bottom: 2px solid rgba(255,255,255,0.08);
+    }
+    .weather-loading { color: rgba(255,255,255,0.6); font-style: italic; font-size: 0.9rem; }
+    .weather-location {
+      color: #ffe08a; font-family: 'Playfair Display', serif;
+      font-size: 0.95rem; font-weight: 700; letter-spacing: 0.05em;
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .weather-items { display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: center; }
+    .weather-item {
+      display: flex; align-items: center; gap: 0.5rem;
+      color: white;
+    }
+    .weather-icon { font-size: 1.4rem; }
+    .weather-val { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; }
+    .weather-lbl { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.65; margin-top: 0.1rem; }
+    .weather-desc {
+      color: rgba(255,255,255,0.75); font-style: italic; font-size: 0.85rem;
+      border-left: 1px solid rgba(255,255,255,0.2); padding-left: 1.2rem;
+    }
+    /* TIMELINE */
+    .timeline-scroll{overflow-x:auto;padding:1.5rem 0 1rem;-webkit-overflow-scrolling:touch;}
+    .timeline-scroll::-webkit-scrollbar{height:4px;}
+    .timeline-scroll::-webkit-scrollbar-track{background:var(--sand);}
+    .timeline-scroll::-webkit-scrollbar-thumb{background:var(--ocean);border-radius:2px;}
+    .timeline-track{display:flex;align-items:flex-start;gap:0;padding:0 1rem;min-width:max-content;position:relative;}
+    .timeline-track::before{content:'';position:absolute;top:52px;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--ocean-deep),var(--coral));z-index:0;}
+    .timeline-step{display:flex;flex-direction:column;align-items:center;width:180px;position:relative;z-index:1;}
+    .timeline-dot{width:20px;height:20px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.2);margin-bottom:0.8rem;flex-shrink:0;}
+    .timeline-dot.done{background:var(--palm);}
+    .timeline-dot.current{background:var(--coral);animation:pulse 1.5s infinite;}
+    .timeline-dot.future{background:#ccc;}
+    .timeline-card{background:var(--card-bg);border-radius:16px;padding:1rem;width:160px;box-shadow:0 4px 20px rgba(0,0,0,0.08);transition:background 0.4s,transform 0.2s;}
+    .timeline-card:hover{transform:translateY(-3px);}
+    .timeline-photo{width:100%;aspect-ratio:4/3;border-radius:10px;object-fit:cover;margin-bottom:0.6rem;background:linear-gradient(135deg,var(--ocean),var(--ocean-deep));display:flex;align-items:center;justify-content:center;font-size:1.8rem;}
+    .timeline-name{font-family:'Playfair Display',serif;font-size:0.9rem;color:var(--ocean-deep);font-weight:700;margin-bottom:0.3rem;}
+    .timeline-date{font-size:0.75rem;color:var(--text-light);margin-bottom:0.2rem;}
+    .timeline-dist{font-size:0.75rem;color:var(--coral);font-weight:600;}
+    .timeline-connector{width:40px;height:3px;background:transparent;margin-top:52px;flex-shrink:0;}
+
+    /* ESCALES */
+    .escale-tabs{display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1.5rem;}
+    .escale-tab{background:var(--sand);border:none;border-radius:30px;padding:0.5rem 1.1rem;font-family:'Lora',serif;font-size:0.85rem;color:var(--text-light);cursor:pointer;transition:all 0.2s;}
+    .escale-tab.active{background:var(--ocean);color:white;}
+    .escale-tab.locked{opacity:0.5;cursor:default;}
+    .escale-tab:not(.locked):hover{background:var(--ocean);color:white;}
+    .escale-panel{animation:fadeIn 0.3s ease;}
+    .escale-panel.hidden{display:none;}
+    .escale-hero{border-radius:20px;overflow:hidden;margin-bottom:1.5rem;position:relative;height:160px;display:flex;align-items:flex-end;}
+    .escale-hero-bg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:5rem;opacity:0.6;}
+    .escale-hero-info{position:relative;z-index:2;padding:1.5rem;background:linear-gradient(to top,rgba(0,0,0,0.6),transparent);width:100%;}
+    .escale-hero-info h3{font-family:'Playfair Display',serif;font-size:1.5rem;color:white;margin-bottom:0.3rem;}
+    .escale-sub{color:rgba(255,255,255,0.8);font-size:0.88rem;font-style:italic;}
+    .escale-body{background:var(--card-bg);border-radius:20px;padding:1.8rem;box-shadow:0 4px 30px rgba(42,125,140,0.08);transition:background 0.4s;}
+    .escale-cols{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
+    @media(max-width:600px){.escale-cols{grid-template-columns:1fr;}}
+    .escale-stat-row{display:flex;flex-direction:column;gap:0.8rem;margin-bottom:1.2rem;}
+    .escale-stat{display:flex;align-items:center;gap:0.8rem;background:var(--body-bg);border-radius:12px;padding:0.7rem 1rem;}
+    .escale-stat span{font-size:1.3rem;}
+    .escale-stat strong{display:block;font-size:0.95rem;color:var(--text);}
+    .escale-stat small{font-size:0.75rem;color:var(--text-light);text-transform:uppercase;letter-spacing:0.06em;}
+    .escale-map{height:200px;border-radius:14px;overflow:hidden;box-shadow:0 2px 15px rgba(0,0,0,0.1);}
+    .escale-meteo{background:linear-gradient(135deg,var(--ocean-deep),var(--ocean));border-radius:14px;padding:1.2rem;color:white;margin-bottom:1.2rem;}
+    .escale-meteo-loading{font-style:italic;opacity:0.7;font-size:0.9rem;}
+    .escale-meteo-row{display:flex;flex-wrap:wrap;gap:1rem;margin-top:0.5rem;}
+    .escale-meteo-item{text-align:center;}
+    .escale-meteo-item strong{display:block;font-family:'Playfair Display',serif;font-size:1.1rem;}
+    .escale-meteo-item small{font-size:0.72rem;opacity:0.7;text-transform:uppercase;letter-spacing:0.06em;}
+    .escale-recit{margin-bottom:1.2rem;}
+    .escale-recit h4,.escale-photos-mini h4{font-family:'Playfair Display',serif;font-size:1rem;color:var(--ocean-deep);margin-bottom:0.6rem;}
+    .escale-recit p{font-size:0.95rem;line-height:1.8;color:var(--text);}
+    .escale-photos-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;margin-top:0.6rem;}
+    .escale-photo{aspect-ratio:1;border-radius:10px;object-fit:cover;cursor:pointer;transition:transform 0.2s;}
+    .escale-photo:hover{transform:scale(1.05);}
+    .escale-locked-msg{background:var(--card-bg);border-radius:20px;padding:3rem;text-align:center;color:var(--text-light);font-style:italic;font-size:1.1rem;box-shadow:0 4px 30px rgba(42,125,140,0.08);}
+
+    /* JOURNAL MÉTÉO */
+    .meteo-grid{display:flex;flex-direction:column;gap:0.8rem;}
+    .meteo-row{background:var(--card-bg);border-radius:16px;padding:1.2rem 1.5rem;display:grid;grid-template-columns:130px 2rem 1fr 1fr 1fr;align-items:center;gap:1rem;box-shadow:0 2px 15px rgba(0,0,0,0.05);transition:background 0.4s;}
+    .meteo-date{font-family:'Playfair Display',serif;font-size:0.9rem;color:var(--ocean-deep);font-weight:700;}
+    .meteo-icon{font-size:1.4rem;text-align:center;}
+    .meteo-val{text-align:center;}
+    .meteo-val strong{display:block;font-size:1rem;color:var(--text);}
+    .meteo-val span{font-size:0.72rem;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-light);}
+    .meteo-desc{font-style:italic;color:var(--text-light);font-size:0.88rem;}
+    @media(max-width:600px){.meteo-row{grid-template-columns:1fr 1fr;gap:0.6rem;}.meteo-date{grid-column:1/-1;}.meteo-icon{display:none;}}
+
+    .like-section{background:var(--card-bg);border-radius:20px;padding:2rem;text-align:center;margin-bottom:2rem;box-shadow:0 4px 30px rgba(42,125,140,0.08);transition:background 0.4s;}
+    .like-section p{color:var(--text-light);font-style:italic;margin-bottom:1rem;}
+    .btn-like{background:none;border:2px solid var(--coral);border-radius:30px;padding:0.75rem 2rem;font-family:'Lora',serif;font-size:1rem;color:var(--coral);cursor:pointer;transition:all 0.2s;display:inline-flex;align-items:center;gap:0.5rem;}
+    .btn-like:hover,.btn-like.liked{background:var(--coral);color:white;transform:scale(1.05);}
+    .like-count{font-size:0.85rem;color:var(--text-light);margin-top:0.8rem;}
+
+    /* COMMENTAIRES */
+    #comments{margin-bottom:2rem;}
+    .comment-form{background:var(--card-bg);border-radius:20px;padding:2rem;box-shadow:0 4px 30px rgba(42,125,140,0.08);margin-bottom:2rem;transition:background 0.4s;}
+    .comment-form h3{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--ocean-deep);margin-bottom:1.2rem;}
+    .form-group{margin-bottom:1rem;}
+    .form-group label{display:block;font-size:0.85rem;color:var(--text-light);margin-bottom:0.4rem;font-weight:600;letter-spacing:0.04em;}
+    .form-group input,.form-group textarea{width:100%;padding:0.75rem 1rem;border:2px solid var(--sand);border-radius:12px;font-family:'Lora',serif;font-size:0.95rem;color:var(--text);background:var(--body-bg);outline:none;transition:border-color 0.2s,background 0.4s,color 0.4s;}
+    .form-group input:focus,.form-group textarea:focus{border-color:var(--ocean);}
+    .form-group textarea{height:100px;resize:vertical;}
+    .btn-send{background:linear-gradient(135deg,var(--coral),var(--coral-light));color:white;border:none;border-radius:30px;padding:0.75rem 2rem;font-family:'Lora',serif;font-size:0.95rem;font-weight:600;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;}
+    .btn-send:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(212,117,90,0.35);}
+    .comment-list{display:flex;flex-direction:column;gap:1rem;}
+    .comment-item{background:var(--card-bg);border-radius:16px;padding:1.2rem 1.5rem;box-shadow:0 2px 15px rgba(0,0,0,0.05);display:flex;gap:1rem;transition:background 0.4s;}
+    .comment-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--ocean),var(--coral));display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+    .comment-author{font-weight:600;color:var(--ocean-deep);font-size:0.9rem;}
+    .comment-date{font-size:0.78rem;color:var(--text-light);margin-bottom:0.4rem;}
+    .comment-text{font-size:0.95rem;line-height:1.6;}
+
+    /* ABONNEMENT */
+    .subscribe-box{background:var(--card-bg);border-radius:16px;padding:1.2rem 1.5rem;box-shadow:0 4px 20px rgba(42,125,140,0.08);border-left:4px solid var(--teal-light, #2aaa99);transition:background 0.4s;}
+    .subscribe-inner{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;}
+    .subscribe-left{display:flex;align-items:center;gap:0.8rem;}
+    .subscribe-right{display:flex;gap:0.5rem;flex:1;min-width:200px;}
+    .subscribe-input{flex:1;padding:0.6rem 1rem;border:2px solid var(--sand);border-radius:10px;font-family:'Lora',serif;font-size:0.9rem;color:var(--text);background:var(--body-bg);outline:none;transition:border-color 0.2s;}
+    .subscribe-input:focus{border-color:var(--ocean);}
+    .subscribe-btn{background:linear-gradient(135deg,var(--ocean),var(--ocean-deep));color:white;border:none;border-radius:10px;padding:0.6rem 1.2rem;font-family:'Lora',serif;font-size:0.88rem;font-weight:600;cursor:pointer;white-space:nowrap;transition:transform 0.2s;}
+    .subscribe-btn:hover{transform:scale(1.03);}
+
+    /* COMPTEUR DAUPHINS */
+    .dolphin-counter{background:linear-gradient(135deg,#0a3a4a,#1a6a7a);border-radius:20px;padding:1.2rem 2rem;display:flex;align-items:center;justify-content:space-between;margin-bottom:2.5rem;box-shadow:0 4px 20px rgba(42,125,140,0.2);}
+    .dolphin-left{display:flex;align-items:center;gap:1rem;color:white;}
+    .dolphin-emoji{font-size:2.5rem;animation:dolphinSwim 3s ease-in-out infinite;}
+    @keyframes dolphinSwim{0%,100%{transform:translateY(0) rotate(-5deg);}50%{transform:translateY(-8px) rotate(5deg);}}
+    .dolphin-count{font-family:'Playfair Display',serif;font-size:3rem;font-weight:700;color:#ffe08a;line-height:1;}
+    .dolphin-label{font-size:0.78rem;text-transform:uppercase;letter-spacing:0.1em;opacity:0.7;margin-top:0.2rem;}
+    .dolphin-right{display:flex;flex-direction:column;align-items:flex-end;gap:0.5rem;}
+    .dolphin-btn{background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.3);border-radius:30px;color:white;padding:0.6rem 1.2rem;font-family:'Lora',serif;font-size:1rem;cursor:pointer;transition:all 0.2s;display:none;}
+    .dolphin-btn:hover{background:rgba(255,255,255,0.25);transform:scale(1.05);}
+    .dolphin-btn.skipper-visible{display:block;}
+    .dolphin-last{font-size:0.75rem;color:rgba(255,255,255,0.5);font-style:italic;}
+
+    /* BANNIÈRE DÉPART */
+    .depart-banner{background:linear-gradient(135deg,#0a2030,#0d4a5e);padding:1.2rem 2rem;text-align:center;color:white;}
+    .depart-before{display:flex;justify-content:center;align-items:center;gap:2rem;flex-wrap:wrap;}
+    .depart-unit{text-align:center;}
+    .depart-val{display:block;font-family:'Playfair Display',serif;font-size:2.5rem;font-weight:700;color:#ffe08a;line-height:1;}
+    .depart-lbl{font-size:0.72rem;text-transform:uppercase;letter-spacing:0.12em;opacity:0.7;margin-top:0.2rem;}
+    .depart-sep{font-size:2rem;opacity:0.3;align-self:center;}
+    .depart-title{font-family:'Playfair Display',serif;font-size:1rem;color:rgba(255,255,255,0.8);margin-bottom:1rem;font-style:italic;}
+    .depart-after{display:flex;justify-content:center;align-items:center;gap:1.5rem;flex-wrap:wrap;}
+    .depart-after-val{font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:700;color:#ffe08a;}
+    .depart-after-lbl{font-size:0.82rem;opacity:0.75;}
+
+    /* SCROLL ANIMATIONS */
+    .scroll-reveal{opacity:0;transform:translateY(30px);transition:opacity 0.7s ease,transform 0.7s ease;}
+    .scroll-reveal.visible{opacity:1;transform:translateY(0);}
+    .scroll-reveal-left{opacity:0;transform:translateX(-30px);transition:opacity 0.7s ease,transform 0.7s ease;}
+    .scroll-reveal-left.visible{opacity:1;transform:translateX(0);}
+    .scroll-reveal-right{opacity:0;transform:translateX(30px);transition:opacity 0.7s ease,transform 0.7s ease;}
+    .scroll-reveal-right.visible{opacity:1;transform:translateX(0);}
+
+    /* HEURE LOCALE */
+    .local-time-bar{background:linear-gradient(135deg,#0a2f3e,#0d4a5e);padding:0.7rem 2rem;display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:1rem;font-size:0.88rem;color:rgba(255,255,255,0.9);}
+    .local-time-item{display:flex;align-items:center;gap:0.4rem;}
+    .local-time-item span{font-family:'Playfair Display',serif;font-size:1rem;color:#ffe08a;}
+    .local-time-sep{color:rgba(255,255,255,0.3);font-size:1.2rem;}
+
+    /* GLOSSAIRE */
+    .glossaire-search-wrap{margin-bottom:1.5rem;}
+    .glossaire-search{width:100%;padding:0.8rem 1.2rem;border:2px solid var(--sand);border-radius:14px;font-family:'Lora',serif;font-size:1rem;color:var(--text);background:var(--body-bg);outline:none;transition:border-color 0.2s;}
+    .glossaire-search:focus{border-color:var(--ocean);}
+    .glossaire-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem;}
+    .glossaire-item{background:var(--card-bg);border-radius:16px;padding:1.2rem 1.4rem;box-shadow:0 2px 15px rgba(0,0,0,0.05);border-left:4px solid var(--ocean);transition:background 0.4s,transform 0.2s;}
+    .glossaire-item:hover{transform:translateY(-2px);}
+    .glossaire-term{font-family:'Playfair Display',serif;font-size:1rem;color:var(--ocean-deep);font-weight:700;margin-bottom:0.4rem;}
+    .glossaire-def{font-size:0.88rem;color:var(--text-light);line-height:1.6;}
+    .glossaire-item.hidden{display:none;}
+
+    /* CONVERTISSEUR */
+    .converter-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;position:relative;z-index:1;}
+    .converter-card{background:var(--card-bg);border-radius:16px;padding:1.5rem;box-shadow:0 4px 20px rgba(42,125,140,0.08);transition:background 0.4s;position:relative;z-index:1;isolation:isolate;}
+    .converter-title{font-family:'Playfair Display',serif;font-size:0.95rem;color:var(--ocean-deep);margin-bottom:1rem;font-weight:700;}
+    .converter-row{display:flex;align-items:center;gap:0.6rem;margin-bottom:0.8rem;flex-wrap:nowrap;overflow:hidden;}
+    .converter-input{flex:1;min-width:0;padding:0.6rem 0.8rem;border:2px solid var(--sand);border-radius:10px;font-family:'Lora',serif;font-size:1rem;color:var(--text);background:var(--body-bg);outline:none;transition:border-color 0.2s;}
+    .converter-input:focus{border-color:var(--ocean);}
+    .converter-unit{font-size:0.82rem;color:var(--text-light);white-space:nowrap;flex-shrink:0;}
+    .converter-result{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--coral);font-weight:700;word-break:break-word;}
+
+    /* FOOTER */
+    footer{background:var(--ocean-deep);color:rgba(255,255,255,0.75);text-align:center;padding:2.5rem 1rem;font-size:0.88rem;line-height:1.8;}
+    footer strong{color:white;}
+
+    @media(max-width:600px){
+      .photo-grid{grid-template-columns:repeat(2,1fr);}
+      nav a{padding:0.9rem 0.8rem;font-size:0.78rem;}
+      .card-body{padding:1.2rem 1.3rem 1.5rem;}
+      .stats-banner{gap:1.2rem;}
+    }
+
+    /* MODE TÉLÉPHONE */
+    body.phone-mode main { padding:1rem 0.8rem 4rem; }
+    body.phone-mode .about-box { padding:1.2rem; }
+    body.phone-mode .about-box > div { grid-template-columns:1fr !important; }
+    body.phone-mode .about-box img { width:100% !important; height:180px !important; }
+    body.phone-mode header h1 { font-size:2.2rem; }
+    body.phone-mode header { min-height:60vh; }
+    body.phone-mode .boat-emoji { font-size:2.5rem; }
+    body.phone-mode .stats-banner { gap:0.8rem; padding:1rem; }
+    body.phone-mode .stat-value { font-size:1.4rem; }
+    body.phone-mode .stat-label { font-size:0.65rem; }
+    body.phone-mode .depart-val { font-size:1.8rem; }
+    body.phone-mode .card-banner { height:140px; font-size:3rem; }
+    body.phone-mode .position-card { padding:1.2rem; }
+    body.phone-mode .position-grid { grid-template-columns:1fr 1fr; gap:0.8rem; }
+    body.phone-mode .eta-grid { grid-template-columns:1fr 1fr; gap:0.8rem; }
+    body.phone-mode .eta-item { padding:0.8rem; }
+    body.phone-mode .eta-dest { font-size:0.85rem; }
+    body.phone-mode #map { height:280px; }
+    body.phone-mode #windy-iframe { height:280px; }
+    body.phone-mode .escale-cols { grid-template-columns:1fr !important; }
+    body.phone-mode .escale-map { height:160px; }
+    body.phone-mode .timeline-step { width:140px; }
+    body.phone-mode .timeline-card { width:130px; }
+    body.phone-mode .converter-grid { grid-template-columns:1fr; }
+    body.phone-mode .glossaire-grid { grid-template-columns:1fr; }
+    body.phone-mode .meteo-row { grid-template-columns:1fr 1fr; }
+    body.phone-mode .meteo-icon { display:none; }
+    body.phone-mode .publish-form { padding:1rem; }
+    body.phone-mode nav { overflow-x:auto; justify-content:flex-start; }
+    body.phone-mode nav a { padding:0.8rem 0.9rem; font-size:0.75rem; flex-shrink:0; }
+    body.phone-mode .section-title { font-size:1.5rem; }
+    body.phone-mode .weather-bar { flex-direction:column; gap:0.5rem; padding:0.8rem 1rem; }
+    body.phone-mode .local-time-bar { flex-direction:column; gap:0.3rem; padding:0.5rem 1rem; font-size:0.78rem; }
+    body.phone-mode .escale-tabs { gap:0.3rem; }
+    body.phone-mode .escale-tab { padding:0.4rem 0.8rem; font-size:0.75rem; }
+
+    /* Bouton mode téléphone */
+    .phone-toggle {
+      position:fixed; bottom:1.5rem; right:1rem; z-index:200;
+      background:var(--ocean); color:white;
+      border:none; border-radius:50px;
+      padding:0.6rem 1rem; font-size:0.8rem;
+      font-family:'Lora',serif; cursor:pointer;
+      box-shadow:0 4px 15px rgba(42,125,140,0.4);
+      transition:all 0.2s; display:flex; align-items:center; gap:0.4rem;
+    }
+    .phone-toggle:hover { transform:scale(1.05); }
+    .phone-toggle.active { background:var(--coral); }
+  </style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div id="loader">
+  <div class="loader-boat">⛵</div>
+  <p class="loader-text">Mise à la voile en cours…</p>
+  <div class="loader-wave"><div class="loader-wave-fill"></div></div>
+</div>
+
+<!-- DARK MODE -->
+<button class="dark-toggle" onclick="toggleDark()" title="Mode nuit">🌙</button>
+
+<!-- MODE TÉLÉPHONE -->
+<button class="phone-toggle" id="phoneToggle" onclick="togglePhone()" title="Mode téléphone">📱 Mobile</button>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
+  <div class="lightbox-close" onclick="closeLightboxDirect()">✕</div>
+  <div class="lightbox-nav lightbox-prev" onclick="lightboxNav(-1)">‹</div>
+  <div class="lightbox-nav lightbox-next" onclick="lightboxNav(1)">›</div>
+  <img id="lightbox-img" src="" alt=""/>
+  <div class="lightbox-caption" id="lightbox-caption"></div>
+  <div class="lightbox-dots" id="lightbox-dots"></div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="stars" id="stars"></div>
+  <div class="header-content">
+    <div class="boat-emoji">⛵</div>
+    <h1>Carpe Diem — Cap sur la <em>Polynésie</em></h1>
+    <p class="subtitle">Le carnet de bord de mon aventure en voilier.</p>
+    <div class="coords">🧭 &nbsp; Canaries → Cap-Vert → Antilles → Panama → Marquises</div>
+  </div>
+  <div class="scroll-hint"><span>Explorer</span><div class="scroll-arrow"></div></div>
+  <div class="wave-overlay"></div>
+</header>
+
+<!-- BANNIÈRE DÉPART -->
+<div class="depart-banner" id="departBanner"></div>
+
+<!-- STATS -->
+<div class="stats-banner">
+  <div class="stat-item"><span class="stat-value" id="stat-miles">0</span><span class="stat-label">Milles parcourus</span></div>
+  <div class="stat-item"><span class="stat-value" id="stat-days">0</span><span class="stat-label">Jours en mer</span></div>
+  <div class="stat-item"><span class="stat-value" id="stat-escales">0</span><span class="stat-label">Escales</span></div>
+  <div class="stat-item"><span class="stat-value" id="stat-remaining">8 250</span><span class="stat-label">Milles restants</span></div>
+</div>
+
+<!-- MÉTÉO + HEURE LOCALE -->
+<div class="weather-bar" id="weatherBar">
+  <div class="weather-loading">⏳ Chargement météo…</div>
+</div>
+<div class="local-time-bar">
+  <div class="local-time-item">
+    🏠 <strong>Chez vous :</strong> <span id="time-home">--:--</span>
+  </div>
+  <div class="local-time-sep">·</div>
+  <div class="local-time-item">
+    ⛵ <strong>À bord :</strong> <span id="time-boat">--:--</span> <span id="time-boat-zone" style="font-size:0.78rem;opacity:0.7;"></span>
+  </div>
+  <div class="local-time-sep">·</div>
+  <div class="local-time-item">
+    🌍 <strong>UTC :</strong> <span id="time-utc">--:--</span>
+  </div>
+</div>
+
+<!-- NAV ONGLETS PRINCIPAUX -->
+<nav>
+  <a href="#" class="main-tab active" onclick="showTab('accueil',this)">🏠 Accueil</a>
+  <a href="#" class="main-tab" onclick="showTab('journal',this)">📖 Journal</a>
+  <a href="#" class="main-tab" onclick="showTab('escales',this)">⚓ Escales</a>
+  <a href="#" class="main-tab" onclick="showTab('position',this)">🗺️ Position</a>
+  <a href="#" class="main-tab" onclick="showTab('galerie',this)">📷 Galerie</a>
+  <a href="#" class="main-tab" onclick="showTab('communaute',this)">🧭 Navigation</a>
+</nav>
+
+<main>
+
+  <!-- TAB: ACCUEIL -->
+  <div class="tab-panel active" id="tab-accueil">
+    <section id="about">
+      <div class="section-divider"></div>
+
+      <!-- ILLUSTRATION FEELING 1350 -->
+      <div style="text-align:center;margin-bottom:2rem;">
+        <svg viewBox="0 0 700 340" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:700px;border-radius:20px;">
+          <defs>
+            <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#5ba3c9"/>
+              <stop offset="60%" stop-color="#87ceeb"/>
+              <stop offset="100%" stop-color="#b0dff0"/>
+            </linearGradient>
+            <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#c8b89a"/>
+              <stop offset="100%" stop-color="#a89070"/>
+            </linearGradient>
+          </defs>
+
+          <!-- Ciel -->
+          <rect width="700" height="340" fill="url(#sky)"/>
+
+          <!-- Nuages -->
+          <ellipse cx="120" cy="50" rx="55" ry="20" fill="white" opacity="0.7"/>
+          <ellipse cx="155" cy="42" rx="35" ry="16" fill="white" opacity="0.8"/>
+          <ellipse cx="90" cy="48" rx="30" ry="14" fill="white" opacity="0.6"/>
+          <ellipse cx="550" cy="70" rx="45" ry="16" fill="white" opacity="0.5"/>
+          <ellipse cx="580" cy="63" rx="28" ry="13" fill="white" opacity="0.6"/>
+
+          <!-- Sol / parking -->
+          <rect x="0" y="265" width="700" height="75" fill="url(#ground)"/>
+          <!-- Graviers -->
+          <ellipse cx="100" cy="285" rx="6" ry="2" fill="#a08060" opacity="0.4"/>
+          <ellipse cx="250" cy="295" rx="5" ry="2" fill="#a08060" opacity="0.3"/>
+          <ellipse cx="500" cy="280" rx="7" ry="2" fill="#a08060" opacity="0.4"/>
+          <ellipse cx="620" cy="292" rx="5" ry="2" fill="#a08060" opacity="0.3"/>
+
+          <!-- TINS (supports) -->
+          <!-- Support gauche -->
+          <rect x="185" y="245" width="8" height="30" fill="#4a6080" rx="2"/>
+          <rect x="170" y="272" width="38" height="5" rx="2" fill="#3a5070"/>
+          <rect x="175" y="250" width="3" height="22" fill="#5a7090" rx="1" transform="rotate(-10,185,250)"/>
+          <rect x="193" y="250" width="3" height="22" fill="#5a7090" rx="1" transform="rotate(10,195,250)"/>
+          <!-- Support droit -->
+          <rect x="430" y="245" width="8" height="30" fill="#4a6080" rx="2"/>
+          <rect x="415" y="272" width="38" height="5" rx="2" fill="#3a5070"/>
+          <rect x="420" y="250" width="3" height="22" fill="#5a7090" rx="1" transform="rotate(-10,430,250)"/>
+          <rect x="438" y="250" width="3" height="22" fill="#5a7090" rx="1" transform="rotate(10,435,250)"/>
+
+          <!-- QUILLE -->
+          <path d="M290 248 L340 248 L330 268 L300 268 Z" fill="#ddd"/>
+
+          <!-- COQUE blanche -->
+          <path d="M130 195 Q140 188 520 185 Q560 185 575 200 Q580 215 560 245 Q420 252 280 252 Q200 252 150 245 Q125 230 130 195 Z" fill="white" stroke="#ddd" stroke-width="1"/>
+
+          <!-- LISTON marine avec filet doré -->
+          <path d="M133 198 Q140 192 518 189 Q555 189 570 202" stroke="#1a2a4a" stroke-width="8" fill="none" stroke-linecap="round"/>
+          <path d="M133 198 Q140 192 518 189 Q555 189 570 202" stroke="#c8a830" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-dasharray="none" opacity="0.9"/>
+          <!-- Filet doré en dessous -->
+          <path d="M133 205 Q140 199 518 196 Q555 196 570 209" stroke="#c8a830" stroke-width="1" fill="none" stroke-linecap="round" opacity="0.7"/>
+
+          <!-- Texte FEELING sur le liston -->
+          <text x="290" y="200" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="white" letter-spacing="3" text-anchor="middle">F E E L I N G</text>
+
+          <!-- Petits pavillons de signal sur le liston (simplifiés) -->
+          <rect x="220" y="193" width="7" height="6" fill="#cc2222" rx="0.5"/>
+          <rect x="231" y="193" width="7" height="6" fill="#2255cc" rx="0.5"/>
+          <rect x="242" y="193" width="7" height="6" fill="#cc9922" rx="0.5"/>
+          <rect x="253" y="193" width="3" height="6" fill="#cc2222" rx="0.5"/>
+          <rect x="256" y="193" width="4" height="6" fill="white" rx="0.5"/>
+
+          <!-- PONT blanc -->
+          <path d="M145 192 L535 189 L540 198 L140 200 Z" fill="#f8f8f8"/>
+
+          <!-- Cockpit -->
+          <rect x="390" y="186" width="110" height="15" rx="3" fill="#2a3a5a" opacity="0.7"/>
+          <!-- Winches -->
+          <circle cx="420" cy="192" r="4" fill="#8a9ab0"/>
+          <circle cx="460" cy="192" r="4" fill="#8a9ab0"/>
+
+          <!-- DRAGON ROUGE sur la coque -->
+          <!-- Corps du dragon simplifié mais reconnaissable -->
+          <g transform="translate(155, 205) scale(0.55)">
+            <!-- Corps principal serpentin -->
+            <path d="M20 60 Q40 30 70 25 Q100 20 120 40 Q140 55 130 75 Q120 90 100 85 Q80 80 70 65 Q55 45 35 55 Q20 70 30 85 Q45 100 65 95" stroke="#8b0000" stroke-width="4" fill="none" stroke-linecap="round"/>
+            <!-- Écailles corps -->
+            <path d="M50 45 Q60 35 80 35 Q100 33 115 48 Q125 60 115 72 Q100 80 82 76 Q62 70 52 55 Z" fill="#cc1111" opacity="0.9"/>
+            <path d="M28 65 Q38 52 52 55 Q65 60 62 75 Q55 88 40 85 Q25 80 28 65 Z" fill="#cc1111" opacity="0.85"/>
+            <!-- Tête -->
+            <path d="M100 20 Q125 5 140 15 Q155 25 148 40 Q138 50 120 42 Q105 35 100 20 Z" fill="#cc1111"/>
+            <!-- Détails tête -->
+            <circle cx="135" cy="22" r="3" fill="#ffcc00"/><!-- œil -->
+            <circle cx="135" cy="22" r="1.5" fill="#2a0000"/>
+            <!-- Cornes -->
+            <path d="M128 12 L132 2 L136 10" fill="#cc1111" stroke="#8b0000" stroke-width="1"/>
+            <path d="M140 10 L148 3 L148 12" fill="#cc1111" stroke="#8b0000" stroke-width="1"/>
+            <!-- Gueule -->
+            <path d="M138 35 Q148 38 152 45" stroke="#8b0000" stroke-width="2" fill="none"/>
+            <!-- Griffes avant -->
+            <path d="M90 60 L80 75 M80 75 L72 80 M80 75 L78 85 M80 75 L88 82" stroke="#8b0000" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <!-- Queue serpentine -->
+            <path d="M28 85 Q15 100 20 115 Q28 125 40 118 Q50 110 45 100" stroke="#cc1111" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+            <path d="M45 100 Q55 88 50 78" stroke="#cc1111" stroke-width="3" fill="none" stroke-linecap="round"/>
+            <!-- Ailes / nageoires -->
+            <path d="M95 42 Q105 25 120 22 Q108 35 105 48 Z" fill="#aa0000" opacity="0.8"/>
+            <path d="M70 38 Q75 20 90 18 Q82 32 78 45 Z" fill="#aa0000" opacity="0.7"/>
+            <!-- Écailles détail -->
+            <path d="M60 52 Q65 48 72 50 Q68 56 60 52 Z" fill="#aa1111"/>
+            <path d="M80 48 Q85 44 92 46 Q88 52 80 48 Z" fill="#aa1111"/>
+            <path d="M98 52 Q103 48 110 50 Q106 56 98 52 Z" fill="#aa1111"/>
+          </g>
+
+          <!-- MÂT -->
+          <rect x="308" y="15" width="6" height="178" rx="2" fill="#e8e8e8"/>
+          <!-- Barres de flèche -->
+          <rect x="270" y="95" width="82" height="4" rx="1" fill="#d0d0d0"/>
+
+          <!-- GRAND VOILE -->
+          <path d="M314 20 L314 188 L510 188 Z" fill="white" opacity="0.92" stroke="#ddd" stroke-width="0.5"/>
+          <!-- Laizes -->
+          <line x1="314" y1="90" x2="440" y2="130" stroke="#bbb" stroke-width="0.7" opacity="0.5"/>
+          <line x1="314" y1="135" x2="475" y2="165" stroke="#bbb" stroke-width="0.7" opacity="0.5"/>
+
+          <!-- GÉNOIS -->
+          <path d="M308 30 L308 188 L158 188 Z" fill="white" opacity="0.88" stroke="#ddd" stroke-width="0.5"/>
+          <!-- Laizes génois -->
+          <line x1="308" y1="105" x2="210" y2="150" stroke="#bbb" stroke-width="0.7" opacity="0.5"/>
+          <line x1="308" y1="155" x2="175" y2="178" stroke="#bbb" stroke-width="0.7" opacity="0.5"/>
+
+          <!-- Haubans -->
+          <line x1="311" y1="20" x2="200" y2="185" stroke="#bbb" stroke-width="1" opacity="0.6"/>
+          <line x1="311" y1="20" x2="450" y2="185" stroke="#bbb" stroke-width="1" opacity="0.6"/>
+          <line x1="311" y1="95" x2="270" y2="185" stroke="#bbb" stroke-width="0.7" opacity="0.4"/>
+          <line x1="311" y1="95" x2="350" y2="185" stroke="#bbb" stroke-width="0.7" opacity="0.4"/>
+
+          <!-- Drisses -->
+          <line x1="311" y1="20" x2="158" y2="188" stroke="#ccc" stroke-width="0.7" opacity="0.4"/>
+
+          <!-- Pavillon -->
+          <path d="M314 15 L330 22 L314 29 Z" fill="#cc1111"/>
+
+          <!-- Étai -->
+          <line x1="308" y1="20" x2="145" y2="188" stroke="#bbb" stroke-width="0.8" opacity="0.5"/>
+
+          <!-- Label -->
+          <text x="350" y="310" text-anchor="middle" font-family="Georgia, serif" font-style="italic" font-size="12" fill="#7a6a5a">Feeling 1350 — 13,5 m</text>
+        </svg>
+      </div>
+      <div class="about-box">
+        <div style="display:grid;grid-template-columns:1fr 160px;gap:1.5rem;align-items:start;">
+          <div>
+            <p>Bonjour à tous ! Je pars de Fuerteventura le 3 septembre 2026 à bord d'un voilier de 13,5 mètres pour un grand périple en passant par l'Atlantique. Ce blog est ma façon de vous emmener avec moi, où que vous soyez.</p>
+            <p style="margin-top:1rem;">La route est longue et magnifique : le Cap-Vert pour la première escale atlantique, puis la grande traversée vers les Antilles — plusieurs îles au programme —, le canal de Panama pour passer dans le Pacifique, et enfin les Marquises comme destination finale.</p>
+            <p style="margin-top:1rem;">Les escales seront mises à jour au fil du voyage, au rythme des découvertes 🗺️ Suivez mes aventures et n'oubliez pas de regarder les étoiles ce soir — les mêmes que je vois du cockpit 🌟</p>
+          </div>
+          <div style="flex-shrink:0;">
+            <img src="https://res.cloudinary.com/dzxp7xk4i/image/upload/v1780338771/WhatsApp_Image_2026-04-18_at_20.01.24_ufufo6.jpg" alt="Le skipper à la barre" style="width:160px;height:210px;object-fit:cover;object-position:center top;border-radius:14px;box-shadow:0 4px 20px rgba(0,0,0,0.15);"/>
+            <p style="text-align:center;font-size:0.75rem;color:var(--text-light);font-style:italic;margin-top:0.5rem;">À la barre ⛵</p>
+          </div>
+        </div>
+        <div class="route-badges">
+          <span class="badge">🛫 Départ : Fuerteventura, 3 sept. 2026</span>
+          <span class="badge">⛵ Voilier : 13,5 m</span>
+          <span class="badge">🗺️ ~8 250 nm prévus</span>
+          <span class="badge">🏁 Arrivée : Marquises</span>
+          <span class="badge">🌍 2 océans</span>
+        </div>
+      </div>
+    </section>
+    <!-- ABONNEMENT NOTIFICATIONS -->
+    <div class="subscribe-box" style="margin-bottom:2rem;">
+      <div class="subscribe-inner">
+        <div class="subscribe-left">
+          <div style="font-size:1.5rem;">🔔</div>
+          <div>
+            <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:var(--ocean-deep);">Recevoir les nouvelles</div>
+            <div style="font-size:0.8rem;color:var(--text-light);">Laisse ton email pour être notifié ⛵</div>
+          </div>
+        </div>
+        <div class="subscribe-right">
+          <input type="email" id="sub-email" placeholder="votre@email.com" class="subscribe-input"/>
+          <button onclick="subscribe()" class="subscribe-btn">S'abonner</button>
+        </div>
+      </div>
+      <p id="sub-success" style="display:none;text-align:center;color:var(--palm);font-style:italic;font-size:0.85rem;margin-top:0.5rem;">✅ Email enregistré !</p>
+      <p id="sub-error" style="display:none;text-align:center;color:var(--coral);font-style:italic;font-size:0.85rem;margin-top:0.5rem;">❌ Erreur, réessayez.</p>
+    </div>
+
+    <!-- Formulaire caché Netlify -->
+    <form name="subscribers" netlify netlify-honeypot="bot-field" hidden>
+      <input type="email" name="email"/>
+    </form>
+
+    <!-- COMPTEUR DE DAUPHINS -->
+    <div class="dolphin-counter" id="dolphinCounter">
+      <div class="dolphin-left">
+        <div class="dolphin-emoji">🐬</div>
+        <div>
+          <div class="dolphin-count" id="dolphinCount">0</div>
+          <div class="dolphin-label">dauphins croisés</div>
+        </div>
+      </div>
+      <div class="dolphin-right">
+        <button class="dolphin-btn" id="dolphinBtn" onclick="addDolphin()" title="Ajouter un dauphin">+1 🐬</button>
+        <div class="dolphin-last" id="dolphinLast"></div>
+      </div>
+    </div>
+
+    <section id="timeline" style="margin-bottom:3.5rem;">
+      <h2 class="section-title">🧭 La route</h2>
+      <div class="section-divider"></div>
+      <div class="timeline-scroll">
+        <div class="timeline-track" id="timelineTrack"></div>
+      </div>
+      <p style="text-align:center;margin-top:0.8rem;color:var(--text-light);font-size:0.82rem;font-style:italic;">← Faire défiler →</p>
+    </section>
+  </div>
+
+  <!-- TAB: JOURNAL -->
+  <div class="tab-panel" id="tab-journal">
+    <section id="journal">
+      <h2 class="section-title">📖 Journal de bord</h2>
+      <div class="section-divider"></div>
+
+      <!-- BOUTON PUBLIER (visible seulement si connecté) -->
+      <div id="publish-zone" style="display:none;margin-bottom:2rem;">
+
+        <!-- MISE À JOUR POSITION -->
+        <div class="publish-form" style="margin-bottom:1.5rem;border-left-color:var(--ocean);">
+          <h3>📍 Mettre à jour ma position</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <div class="form-group">
+              <label>Latitude</label>
+              <input type="number" id="pos-lat" placeholder="Ex: 16.89" step="0.0001"/>
+            </div>
+            <div class="form-group">
+              <label>Longitude</label>
+              <input type="number" id="pos-lng" placeholder="Ex: -24.99" step="0.0001"/>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Nom du lieu</label>
+            <input type="text" id="pos-name" placeholder="Ex: Mindelo, Cap-Vert"/>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <div class="form-group">
+              <label>Milles parcourus</label>
+              <input type="number" id="pos-miles" placeholder="Ex: 850"/>
+            </div>
+            <div class="form-group">
+              <label>Jours en mer</label>
+              <input type="number" id="pos-days" placeholder="Ex: 5"/>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <div class="form-group">
+              <label>Dernière escale</label>
+              <input type="text" id="pos-last" placeholder="Ex: Fuerteventura 🇪🇸"/>
+            </div>
+            <div class="form-group">
+              <label>Prochaine escale</label>
+              <input type="text" id="pos-next" placeholder="Ex: Mindelo, Cap-Vert ➡️"/>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Vent & mer (optionnel)</label>
+            <input type="text" id="pos-wind" placeholder="Ex: NE 20 nœuds, houle 2m"/>
+          </div>
+          <button class="btn-send" style="background:linear-gradient(135deg,var(--ocean),var(--ocean-deep));" onclick="updatePosition()">Mettre à jour 📍</button>
+          <p id="pos-success" style="display:none;margin-top:1rem;color:var(--palm);font-style:italic;">✅ Position mise à jour !</p>
+        </div>
+
+        <!-- NOUVEL ARTICLE -->
+        <div class="publish-form">
+          <h3>✍️ Nouvel article</h3>
+          <div class="form-group">
+            <label>Titre</label>
+            <input type="text" id="pub-title" placeholder="Arrivée à Mindelo…"/>
+          </div>
+          <div class="form-group">
+            <label>Tag</label>
+            <select id="pub-tag" style="width:100%;padding:0.75rem 1rem;border:2px solid var(--sand);border-radius:12px;font-family:'Lora',serif;font-size:0.95rem;color:var(--text);background:var(--body-bg);outline:none;">
+              <option>⚓ Départ</option>
+              <option>🏝️ Escale</option>
+              <option>🌙 En mer</option>
+              <option>🌊 Traversée</option>
+              <option>📍 Position</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Lier à une escale (optionnel)</label>
+            <select id="pub-escale" style="width:100%;padding:0.75rem 1rem;border:2px solid var(--sand);border-radius:12px;font-family:'Lora',serif;font-size:0.95rem;color:var(--text);background:var(--body-bg);outline:none;">
+              <option value="">— Aucune escale —</option>
+              <option value="canaries">🇪🇸 Canaries</option>
+              <option value="capvert">🇨🇻 Cap-Vert</option>
+              <option value="martinique">🌴 Antilles</option>
+              <option value="panama">🇵🇦 Panama</option>
+              <option value="marquises">🌺 Marquises</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Photo (lien Cloudinary, optionnel)</label>
+            <input type="text" id="pub-photo" placeholder="https://res.cloudinary.com/dzxp7xk4i/image/upload/..."/>
+          </div>
+          <div class="form-group">
+            <label>Texte</label>
+            <textarea id="pub-text" style="height:150px;" placeholder="Raconte ton escale…"></textarea>
+          </div>
+          <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+            <button id="btn-publish" class="btn-send" onclick="publishArticle()">Publier ⛵</button>
+            <button onclick="document.getElementById('publish-zone').style.display='none'" style="background:none;border:2px solid var(--sand);border-radius:30px;padding:0.75rem 1.5rem;font-family:'Lora',serif;cursor:pointer;color:var(--text-light);">Annuler</button>
+          </div>
+        </div><!-- end publish-form article -->
+      </div><!-- end publish-zone -->
+
+      <!-- BOUTON CONNEXION SKIPPER -->
+      <div id="skipper-login" style="text-align:center;margin-bottom:2rem;">
+        <button onclick="skipperLogin()" style="background:none;border:1px solid var(--sand);border-radius:30px;padding:0.5rem 1.2rem;font-family:'Lora',serif;font-size:0.82rem;cursor:pointer;color:var(--text-light);">🔑 Skipper</button>
+      </div>
+
+      <!-- ARTICLES -->
+      <div id="articles-list">
+        <p style="text-align:center;color:var(--text-light);font-style:italic;padding:2rem 0;">Les articles arriveront au fil des escales ⛵</p>
+      </div>
+    </section>
+  </div>
+
+  <!-- TAB: ESCALES -->
+  <div class="tab-panel" id="tab-escales">
+    <h2 class="section-title">⚓ Escales</h2>
+    <div class="section-divider"></div>
+
+    <!-- ONGLETS -->
+    <div class="escale-tabs" id="escaleTabs">
+      <button class="escale-tab active" onclick="showEscale('canaries')">🇪🇸 Canaries</button>
+      <button class="escale-tab" onclick="showEscale('capvert')">🇨🇻 Cap-Vert</button>
+      <button class="escale-tab" onclick="showEscale('martinique')">🌴 Antilles</button>
+      <button class="escale-tab" onclick="showEscale('panama')">🇵🇦 Panama</button>
+      <button class="escale-tab" onclick="showEscale('marquises')">🌺 Marquises</button>
+    </div>
+
+    <!-- CANARIES -->
+    <div class="escale-panel" id="escale-canaries">
+      <div class="escale-hero">
+        <div class="escale-hero-bg" style="background:linear-gradient(135deg,#c9502a,#f4a460);">🌋</div>
+        <div class="escale-hero-info">
+          <h3>Fuerteventura, Canaries</h3>
+          <p class="escale-sub">🗓️ Départ prévu : 3 septembre 2026</p>
+        </div>
+      </div>
+      <div class="escale-body">
+        <div class="escale-cols">
+          <div class="escale-left">
+            <div class="escale-stat-row">
+              <div class="escale-stat"><span>📍</span><div><strong>28°24'N 13°51'W</strong><small>Coordonnées</small></div></div>
+              <div class="escale-stat"><span>📏</span><div><strong>0 milles</strong><small>Depuis le départ</small></div></div>
+              <div class="escale-stat"><span>⏳</span><div><strong>3 septembre 2026</strong><small>Date de départ</small></div></div>
+            </div>
+            <div class="escale-map" id="map-canaries"></div>
+          </div>
+          <div class="escale-right">
+            <div class="escale-meteo" id="meteo-canaries"><div class="escale-meteo-loading">⏳ Météo en cours…</div></div>
+            <div class="escale-photos-grid" id="photos-canaries"></div>
+          </div>
+        </div>
+      </div>
+      <div class="escale-articles" id="articles-canaries"></div>
+    </div>
+    <div class="escale-panel hidden" id="escale-capvert">
+      <div class="escale-hero">
+        <div class="escale-hero-bg" style="background:linear-gradient(135deg,#2d6a4f,#74c69d);">🌋</div>
+        <div class="escale-hero-info">
+          <h3>Mindelo, São Vicente</h3>
+          <p class="escale-sub">🗓️ Départ Canaries : 3 septembre 2026 · Séjour : 2 mois</p>
+        </div>
+      </div>
+      <div class="escale-body">
+        <div class="escale-cols">
+          <div class="escale-left">
+            <div class="escale-stat-row">
+              <div class="escale-stat"><span>📍</span><div><strong>16°53'N 24°59'W</strong><small>Coordonnées</small></div></div>
+              <div class="escale-stat"><span>📏</span><div><strong>~850 milles</strong><small>Depuis les Canaries</small></div></div>
+              <div class="escale-stat"><span>⏳</span><div><strong>~5 jours de mer</strong><small>Durée traversée</small></div></div>
+            </div>
+            <div class="escale-map" id="map-capvert"></div>
+          </div>
+          <div class="escale-right">
+            <div class="escale-meteo" id="meteo-capvert"><div class="escale-meteo-loading">⏳ Météo en cours…</div></div>
+            <div class="escale-photos-grid" id="photos-capvert"></div>
+          </div>
+        </div>
+      </div>
+      <div class="escale-articles" id="articles-capvert"></div>
+    </div>
+
+    <!-- MARTINIQUE -->
+    <div class="escale-panel hidden" id="escale-martinique">
+      <div class="escale-hero">
+        <div class="escale-hero-bg" style="background:linear-gradient(135deg,#1a6575,#2aaa99);">🌴</div>
+        <div class="escale-hero-info">
+          <h3>Antilles</h3>
+          <p class="escale-sub">🗓️ Plusieurs îles — mises à jour au fil du voyage 🗺️</p>
+        </div>
+      </div>
+      <div class="escale-body">
+        <div class="escale-cols">
+          <div class="escale-left">
+            <div class="escale-stat-row">
+              <div class="escale-stat"><span>📍</span><div><strong>14°28'N 60°52'W</strong><small>Coordonnées</small></div></div>
+              <div class="escale-stat"><span>📏</span><div><strong>~2 950 milles</strong><small>Depuis les Canaries</small></div></div>
+              <div class="escale-stat"><span>⏳</span><div><strong>~12 jours de mer</strong><small>Durée traversée</small></div></div>
+            </div>
+            <div class="escale-map" id="map-martinique"></div>
+          </div>
+          <div class="escale-right">
+            <div class="escale-meteo" id="meteo-martinique"><div class="escale-meteo-loading">⏳ Météo en cours…</div></div>
+            <div class="escale-photos-grid" id="photos-martinique"></div>
+          </div>
+        </div>
+      </div>
+      <div class="escale-articles" id="articles-martinique"></div>
+    </div>
+
+    <!-- PANAMA -->
+    <div class="escale-panel hidden" id="escale-panama">
+      <div class="escale-hero">
+        <div class="escale-hero-bg" style="background:linear-gradient(135deg,#2d6a4f,#52b788);">🚢</div>
+        <div class="escale-hero-info">
+          <h3>Fuerteventura, Canaries</h3>
+          <p class="escale-sub">🗓️ Escale technique · Mise à jour à venir</p>
+        </div>
+      </div>
+      <div class="escale-body">
+        <div class="escale-cols">
+          <div class="escale-left">
+            <div class="escale-stat-row">
+              <div class="escale-stat"><span>📍</span><div><strong>9°00'N 79°30'W</strong><small>Coordonnées</small></div></div>
+              <div class="escale-stat"><span>📏</span><div><strong>~0 milles</strong><small>Depuis les Canaries</small></div></div>
+              <div class="escale-stat"><span>⏳</span><div><strong>~7 jours de mer</strong><small>Durée traversée</small></div></div>
+            </div>
+            <div class="escale-map" id="map-panama"></div>
+          </div>
+          <div class="escale-right">
+            <div class="escale-meteo" id="meteo-panama"><div class="escale-meteo-loading">⏳ Météo en cours…</div></div>
+            <div class="escale-photos-grid" id="photos-panama"></div>
+          </div>
+        </div>
+      </div>
+      <div class="escale-articles" id="articles-panama"></div>
+    </div>
+
+    <!-- MARQUISES -->
+    <div class="escale-panel hidden" id="escale-marquises">
+      <div class="escale-hero">
+        <div class="escale-hero-bg" style="background:linear-gradient(135deg,#0d4a5e,#2aaa99);">🌺</div>
+        <div class="escale-hero-info">
+          <h3>Nuku Hiva, Marquises</h3>
+          <p class="escale-sub">🗓️ Destination finale 🎉</p>
+        </div>
+      </div>
+      <div class="escale-body">
+        <div class="escale-cols">
+          <div class="escale-left">
+            <div class="escale-stat-row">
+              <div class="escale-stat"><span>📍</span><div><strong>8°54'S 140°06'W</strong><small>Coordonnées</small></div></div>
+              <div class="escale-stat"><span>📏</span><div><strong>~8 250 milles</strong><small>Depuis les Canaries</small></div></div>
+              <div class="escale-stat"><span>⏳</span><div><strong>~25 jours de mer</strong><small>Durée traversée</small></div></div>
+            </div>
+            <div class="escale-map" id="map-marquises"></div>
+          </div>
+          <div class="escale-right">
+            <div class="escale-meteo" id="meteo-marquises"><div class="escale-meteo-loading">⏳ Météo en cours…</div></div>
+            <div class="escale-photos-grid" id="photos-marquises"></div>
+          </div>
+        </div>
+      </div>
+      <div class="escale-articles" id="articles-marquises"></div>
+    </div>
+
+  </section>
+
+  </div><!-- end tab-escales -->
+
+  <!-- TAB: GALERIE -->
+  <div class="tab-panel" id="tab-galerie">
+    <section id="photos">
+    <h2 class="section-title">📷 Galerie</h2>
+    <div class="section-divider"></div>
+    <div class="photo-grid" id="photoGrid">
+      <!-- Rempli dynamiquement -->
+    </div>
+    <p style="text-align:center;margin-top:1.2rem;color:var(--text-light);font-style:italic;font-size:0.9rem;">Les photos arrivent au fur et à mesure des escales ✨ — Cliquez pour agrandir</p>
+  </section>
+  </div><!-- end tab-galerie -->
+
+  <!-- TAB: POSITION -->
+  <div class="tab-panel" id="tab-position">
+  <section id="position">
+    <h2 class="section-title">🗺️ Ma route & position</h2>
+    <div class="section-divider"></div>
+
+    <!-- Tabs pour switcher entre carte route et Windy -->
+    <div class="map-tabs">
+      <button class="map-tab active" onclick="switchMap('route')">🗺️ Route</button>
+      <button class="map-tab" onclick="switchMap('windy')">🌬️ Vent (Windy)</button>
+    </div>
+
+    <div id="map-route-wrap">
+      <div id="map"></div>
+    </div>
+
+    <div id="map-windy-wrap" style="display:none;">
+      <iframe
+        id="windy-iframe"
+        width="100%"
+        height="420"
+        src="https://embed.windy.com/embed2.html?lat=28.42&lon=-13.85&detailLat=28.42&detailLon=-13.85&width=650&height=420&zoom=5&level=surface&overlay=wind&product=ecmwf&menu=&message=true&marker=true&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=kt&metricTemp=%C2%B0C&radarRange=-1"
+        frameborder="0"
+        style="border-radius:20px;box-shadow:0 4px 30px rgba(42,125,140,0.15);"
+      ></iframe>
+    </div>
+
+    <div class="position-card" style="margin-top:1.5rem;">
+      <h3>📍 Ma position actuelle</h3>
+      <div class="position-grid">
+        <div class="pos-item"><label>Position</label><strong id="pos-display">28°24'N — 13°51'W</strong></div>
+        <div class="pos-item"><label>Dernière escale</label><strong id="pos-last-display">Fuerteventura, Canaries 🇪🇸</strong></div>
+        <div class="pos-item"><label>Prochaine escale</label><strong id="pos-next-display">Mindelo, Cap-Vert ➡️</strong></div>
+        <div class="pos-item"><label>Vent & mer</label><strong id="pos-wind-display">NE 20 nœuds (alizé)</strong></div>
+        <div class="pos-item"><label>Mer</label><strong id="pos-sea-display">Belle, houle 2 m</strong></div>
+        <div class="pos-item"><label>Mise à jour</label><strong id="pos-date-display">—</strong></div>
+      </div>
+      <div class="distance-bar-wrap">
+        <div class="distance-bar-label">
+          <span>🏁 Canaries</span>
+          <span>Progression : 0%</span>
+          <span>Marquises 🌺</span>
+        </div>
+        <div class="distance-bar">
+          <div class="distance-bar-fill" id="progressBar" style="width:0%"></div>
+        </div>
+      </div>
+
+      <!-- ESTIMATIONS D'ARRIVÉE -->
+      <div class="eta-grid" id="etaGrid"></div>
+    </div>
+  </section>
+
+  <!-- JOURNAL MÉTÉO -->
+  <section id="meteo" style="margin-bottom:3.5rem;">
+    <h2 class="section-title">🌦️ Journal météo</h2>
+    <div class="section-divider"></div>
+    <p style="color:var(--text-light);font-size:0.88rem;font-style:italic;margin-bottom:1.2rem;" id="meteoLocation">📍 Prévisions à Fuerteventura, Canaries — 28°24'N 13°51'W</p>
+    <div id="meteoJournal"><p style="text-align:center;color:var(--text-light);font-style:italic;padding:2rem 0;">⏳ Chargement des données météo…</p></div>
+  </section>
+
+  </div><!-- end tab-position -->
+
+  <!-- TAB: COMMUNAUTÉ -->
+  <div class="tab-panel" id="tab-communaute">
+
+  <!-- CONVERTISSEUR -->
+  <section id="convertisseur" style="margin-bottom:3.5rem;">
+    <h2 class="section-title">🔢 Convertisseur marin</h2>
+    <div class="section-divider"></div>
+    <div class="converter-grid">
+
+      <!-- Milles → KM -->
+      <div class="converter-card">
+        <div class="converter-title">⚓ Milles nautiques → Kilomètres</div>
+        <div class="converter-row">
+          <input type="number" class="converter-input" id="miles-in" placeholder="Ex: 850" oninput="convertMiles()"/>
+          <span class="converter-unit">milles</span>
+        </div>
+        <div class="converter-result" id="miles-out">— km</div>
+      </div>
+
+      <!-- Nœuds → KM/H -->
+      <div class="converter-card">
+        <div class="converter-title">💨 Nœuds → km/h</div>
+        <div class="converter-row">
+          <input type="number" class="converter-input" id="knots-in" placeholder="Ex: 7" oninput="convertKnots()"/>
+          <span class="converter-unit">nœuds</span>
+        </div>
+        <div class="converter-result" id="knots-out">— km/h</div>
+      </div>
+
+      <!-- Beaufort -->
+      <div class="converter-card">
+        <div class="converter-title">🌬️ Échelle de Beaufort</div>
+        <div class="converter-row">
+          <input type="number" class="converter-input" id="bft-in" placeholder="Ex: 5" min="0" max="12" oninput="convertBeaufort()"/>
+          <span class="converter-unit">Beaufort</span>
+        </div>
+        <div class="converter-result" id="bft-out">—</div>
+      </div>
+
+      <!-- Durée traversée -->
+      <div class="converter-card">
+        <div class="converter-title">🕐 Durée d'une traversée</div>
+        <div class="converter-row">
+          <input type="number" class="converter-input" id="trav-in" placeholder="Ex: 2100" oninput="convertTravee()"/>
+          <span class="converter-unit">milles</span>
+        </div>
+        <div class="converter-result" id="trav-out">— jours (à 7 nœuds)</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- GLOSSAIRE -->
+  <section id="glossaire" style="margin-bottom:3.5rem;">
+    <h2 class="section-title">📖 Glossaire marin</h2>
+    <div class="section-divider"></div>
+    <p style="color:var(--text-light);font-style:italic;font-size:0.9rem;margin-bottom:1.5rem;">Pour mieux comprendre le journal de bord 🌊</p>
+    <div class="glossaire-search-wrap">
+      <input type="text" id="glossaire-search" class="glossaire-search" placeholder="🔍 Rechercher un terme…" oninput="filterGlossaire()"/>
+    </div>
+    <div class="glossaire-grid" id="glossaireGrid"></div>
+  </section>
+
+  </div><!-- end tab-communaute -->
+
+</main>
+
+<footer>
+  <p>⛵ <strong>Carpe Diem</strong> — Cap sur la Polynésie · Carnet de bord 2026</p>
+  <p>Canaries → Cap-Vert → Antilles → Panama → Marquises 🌺</p>
+  <p style="margin-top:0.5rem;font-size:0.78rem;opacity:0.6;">Mis à jour depuis n'importe où sur les océans du monde</p>
+</footer>
+
+<script>
+  // ONGLETS PRINCIPAUX
+  function showTab(id, el) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + id).classList.add('active');
+    if (el) el.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // Init carte escale si besoin
+    if (id === 'escales') setTimeout(() => initEscaleMap('canaries'), 300);
+    if (id === 'position') {
+      setTimeout(() => {
+        initMainMap();
+        if (map) map.invalidateSize();
+      }, 150);
+    }
+  }
+
+  // LOADER
+  window.addEventListener('load', async () => {
+    // Loader — se cache toujours même si erreur
+    setTimeout(() => {
+      try { document.getElementById('loader').classList.add('hide'); setTimeout(() => { try { document.getElementById('loader').remove(); } catch(e){} }, 800); } catch(e){}
+      try { document.getElementById('progressBar').style.width = '0%'; } catch(e){}
+    }, 2200);
+
+    // Horloges
+    try { updateClocks(); setInterval(updateClocks, 1000); } catch(e){}
+
+    // Animations scroll
+    try { initScrollAnimations(); } catch(e){}
+
+    // Carte escale
+    try { setTimeout(() => initEscaleMap('canaries'), 800); } catch(e){}
+
+    // Galerie + photos escales
+    try { await loadGallery(); } catch(e){}
+    try { ['canaries','capvert','martinique','panama','marquises'].forEach(id => loadEscalePhotos(id)); } catch(e){}
+
+    // Position Supabase
+    try {
+      const posData = await supaGet('position');
+      if (posData && posData[0]) applyPosition(posData[0]);
+    } catch(e){}
+  });
+
+  // ÉTOILES
+  const starsEl = document.getElementById('stars');
+  for (let i = 0; i < 80; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    s.style.left = Math.random()*100+'%';
+    s.style.top  = Math.random()*80+'%';
+    s.style.animationDelay = Math.random()*3+'s';
+    const sz = Math.random()*2+1.5;
+    s.style.width = s.style.height = sz+'px';
+    starsEl.appendChild(s);
+  }
+
+  // MODE TÉLÉPHONE
+  function togglePhone() {
+    const body = document.body;
+    const btn = document.getElementById('phoneToggle');
+    const isPhone = body.classList.toggle('phone-mode');
+    btn.classList.toggle('active', isPhone);
+    btn.innerHTML = isPhone ? '🖥️ Bureau' : '📱 Mobile';
+    localStorage.setItem('phone-mode', isPhone);
+  }
+
+  // Auto-détection mobile
+  if (window.innerWidth <= 768 || localStorage.getItem('phone-mode') === 'true') {
+    document.body.classList.add('phone-mode');
+    document.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('phoneToggle');
+      if (btn) { btn.classList.add('active'); btn.innerHTML = '🖥️ Bureau'; }
+    });
+  }
+
+  // MODE NUIT
+  function toggleDark() {
+    const html = document.documentElement;
+    const isDark = html.getAttribute('data-theme')==='dark';
+    html.setAttribute('data-theme', isDark?'light':'dark');
+    document.querySelector('.dark-toggle').textContent = isDark?'🌙':'☀️';
+  }
+
+  // LIGHTBOX
+  const photos = [];
+  let currentPhoto = 0;
+
+  function openLightbox(idx) {
+    if (!photos[idx].src) return;
+    currentPhoto = idx;
+    updateLightbox();
+    document.getElementById('lightbox').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function updateLightbox() {
+    document.getElementById('lightbox-img').src = photos[currentPhoto].src;
+    document.getElementById('lightbox-caption').textContent = photos[currentPhoto].caption;
+    const dots = document.getElementById('lightbox-dots');
+    dots.innerHTML = '';
+    photos.filter(p=>p.src).forEach((p,i) => {
+      const d = document.createElement('div');
+      d.className = 'lightbox-dot'+(photos.indexOf(p)===currentPhoto?' active':'');
+      d.onclick = () => { currentPhoto=photos.indexOf(p); updateLightbox(); };
+      dots.appendChild(d);
+    });
+  }
+  function lightboxNav(dir) {
+    const withSrc = photos.map((p,i)=>p.src?i:-1).filter(i=>i>=0);
+    const cur = withSrc.indexOf(currentPhoto);
+    currentPhoto = withSrc[(cur+dir+withSrc.length)%withSrc.length];
+    updateLightbox();
+  }
+  function closeLightbox(e) { if(e.target===document.getElementById('lightbox')) closeLightboxDirect(); }
+  function closeLightboxDirect() { document.getElementById('lightbox').classList.remove('open'); document.body.style.overflow=''; }
+  document.addEventListener('keydown', e => {
+    if(e.key==='Escape') closeLightboxDirect();
+    if(e.key==='ArrowLeft') lightboxNav(-1);
+    if(e.key==='ArrowRight') lightboxNav(1);
+  });
+
+  async function loadEscaleArticles(escaleId) {
+    try {
+      const data = await supaGet('articles', `&escale=eq.${escaleId}`);
+      const container = document.getElementById('articles-' + escaleId);
+      if (!container) return;
+      if (!data || data.length === 0) { container.innerHTML = ''; return; }
+      container.innerHTML = '<h4 style="font-family:\'Playfair Display\',serif;color:var(--ocean-deep);margin-bottom:1rem;font-size:1.1rem;">📖 Articles de cette escale</h4>' +
+        data.map((a, i) => {
+          const bg = banners[i % banners.length];
+          const emoji = bannerEmojis[bg];
+          const shortText = a.text && a.text.length > 150 ? a.text.slice(0,150)+'…' : a.text;
+          const banner = a.photo
+            ? `<div class="card-banner" style="padding:0;overflow:hidden;height:140px;"><img src="${a.photo}" style="width:100%;height:100%;object-fit:cover;" alt="${a.title}"/></div>`
+            : `<div class="card-banner ${bg}" style="height:80px;font-size:2.5rem;">${emoji}</div>`;
+          return `<article class="article-card">
+            ${banner}
+            <div class="card-body">
+              <div class="card-meta"><span class="card-date">${a.date}</span><span class="card-tag">${a.tag}</span></div>
+              <h2 style="font-size:1.2rem;">${a.title}</h2>
+              <p>${shortText}</p>
+            </div>
+          </article>`;
+        }).join('');
+    } catch(e) {}
+  }
+
+  // GALERIE DYNAMIQUE (Supabase)
+  let galleryPhotos = [];
+
+  async function loadGallery() {
+    try {
+      galleryPhotos = await supaGet('gallery');
+      renderGallery();
+    } catch(e) {}
+  }
+
+  function renderGallery() {
+    const grid = document.getElementById('photoGrid');
+    if (!grid) return;
+    const placeholders = [
+      { emoji:'🌊', label:'Le lagon', cls:'ph-1' },
+      { emoji:'🌅', label:'Coucher de soleil', cls:'ph-2' },
+      { emoji:'🐠', label:'Sous l\'eau', cls:'ph-3' },
+      { emoji:'⭐', label:'Nuit étoilée', cls:'ph-4' },
+      { emoji:'⛵', label:'En route', cls:'ph-5' },
+      { emoji:'🏝️', label:'Escale', cls:'ph-6' },
+    ];
+    const total = Math.max(6, galleryPhotos.length);
+    photos.length = 0;
+    let html = '';
+    for (let i = 0; i < total; i++) {
+      if (galleryPhotos[i]) {
+        const p = galleryPhotos[i];
+        photos.push({ src: p.src, caption: `📷 ${p.caption} — ${p.date}` });
+        html += `<div class="photo-placeholder" style="padding:0;overflow:hidden;position:relative;cursor:pointer;" onclick="openLightbox(${i})">
+          <img src="${p.src}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" alt="${p.caption}"/>
+        </div>`;
+      } else {
+        const pl = placeholders[i % placeholders.length];
+        photos.push({ src: null, caption: pl.label });
+        html += `<div class="photo-placeholder ${pl.cls}" onclick="openLightbox(${i})">${pl.emoji}<span>${pl.label}</span></div>`;
+      }
+    }
+    grid.innerHTML = html;
+  }
+
+  async function loadEscalePhotos(escaleId) {
+    try {
+      const data = await supaGet('gallery', `&escale=eq.${escaleId}`);
+      const container = document.getElementById('photos-' + escaleId);
+      if (!container) return;
+      if (!data || data.length === 0) { container.innerHTML = ''; return; }
+      container.innerHTML = data.map(p => `
+        <img src="${p.src}" class="escale-photo" alt="${p.caption}" title="${p.caption}" style="aspect-ratio:1;width:100%;object-fit:cover;border-radius:10px;cursor:pointer;margin-top:0.5rem;"/>
+      `).join('');
+    } catch(e) {}
+  }
+
+  // Charge les photos d'escales au chargement
+  // SUPABASE
+  const SUPABASE_URL = 'https://wguqueoxffxlsxuvppfs.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndndXF1ZW94ZmZ4bHN4dXZwcGZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzMzE1MjMsImV4cCI6MjA5NTkwNzUyM30.GAt2KsikpClMMvDQ3grp27p75gYRBsReZMO15v-Oarw';
+
+  async function supaGet(table, filter='') {
+    const orderCol = (table === 'position' || table === 'articles' || table === 'gallery' || table === 'dolphins') ? 'id' : 'created_at';
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?order=${orderCol}.desc${filter}`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    return res.ok ? res.json() : [];
+  }
+
+  async function supaInsert(table, data) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+      body: JSON.stringify(data)
+    });
+    return res.ok ? res.json() : null;
+  }
+
+  async function supaDelete(table, id) {
+    await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+      method: 'DELETE',
+      headers: { 
+        'apikey': SUPABASE_KEY, 
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Prefer': 'return=representation'
+      }
+    });
+  }
+
+  async function supaUpsert(table, data) {
+    await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify(data)
+    });
+  }
+
+  // MISE À JOUR POSITION
+  function updatePosition() {
+    const lat   = parseFloat(document.getElementById('pos-lat').value);
+    const lng   = parseFloat(document.getElementById('pos-lng').value);
+    const name  = document.getElementById('pos-name').value.trim();
+    const miles = document.getElementById('pos-miles').value.trim();
+    const days  = document.getElementById('pos-days').value.trim();
+    const last  = document.getElementById('pos-last').value.trim();
+    const next  = document.getElementById('pos-next').value.trim();
+    const wind  = document.getElementById('pos-wind').value.trim();
+
+    if (isNaN(lat) || isNaN(lng) || !name) { alert('Remplis au moins la latitude, longitude et le nom du lieu !'); return; }
+
+    const now = new Date().toLocaleDateString('fr-FR', {day:'numeric',month:'long',year:'numeric'});
+    const pos = { lat, lng, name, miles, days, last, next, wind, date: now };
+
+    // Sauvegarde Supabase - d'abord essaie UPDATE, sinon INSERT
+    fetch(`${SUPABASE_URL}/rest/v1/position?id=eq.1`, {
+      method: 'PATCH',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(pos)
+    }).then(res => {
+      if (res.status === 404 || res.status === 406) {
+        // Pas de ligne existante, on insère
+        fetch(`${SUPABASE_URL}/rest/v1/position`, {
+          method: 'POST',
+          headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: 1, ...pos })
+        });
+      }
+    });
+
+    applyPosition(pos);
+    document.getElementById('pos-success').style.display = 'block';
+    setTimeout(() => document.getElementById('pos-success').style.display = 'none', 3000);
+  }
+
+  function applyPosition(pos) {
+    if (!pos) return;
+
+    // Stats
+    if (pos.miles) { document.getElementById('stat-miles').textContent = parseInt(pos.miles).toLocaleString('fr-FR'); document.getElementById('stat-remaining').textContent = Math.max(0, 8250 - parseInt(pos.miles)).toLocaleString('fr-FR'); }
+    if (pos.days)  document.getElementById('stat-days').textContent = pos.days;
+
+    // Position card
+    const latStr = pos.lat >= 0 ? pos.lat.toFixed(2)+'°N' : Math.abs(pos.lat).toFixed(2)+'°S';
+    const lngStr = pos.lng >= 0 ? pos.lng.toFixed(2)+'°E' : Math.abs(pos.lng).toFixed(2)+'°W';
+    const posDisplay = document.getElementById('pos-display');
+    if (posDisplay) posDisplay.textContent = latStr + ' — ' + lngStr;
+    if (pos.last) { const el = document.getElementById('pos-last-display'); if(el) el.textContent = pos.last; }
+    if (pos.next) { const el = document.getElementById('pos-next-display'); if(el) el.textContent = pos.next; }
+    if (pos.wind) { const el = document.getElementById('pos-wind-display'); if(el) el.textContent = pos.wind; }
+    if (pos.date) { const el = document.getElementById('pos-date-display'); if(el) el.textContent = pos.date; }
+
+    // Barre de progression
+    if (pos.miles) {
+      const pct = Math.min(100, Math.round(parseInt(pos.miles) / 8250 * 100));
+      const bar = document.getElementById('progressBar');
+      if (bar) bar.style.width = pct + '%';
+      const lbl = document.querySelector('.distance-bar-label span:nth-child(2)');
+      if (lbl) lbl.textContent = 'Progression : ' + pct + '%';
+    }
+
+    // Météo label
+    const meteoLoc = document.getElementById('meteoLocation');
+    if (meteoLoc) meteoLoc.textContent = `📍 Prévisions à ${pos.name} — ${latStr} ${lngStr}`;
+
+    // Carte Leaflet
+    if (typeof map !== 'undefined') {
+      map.eachLayer(layer => { if (layer._isCurrentMarker) map.removeLayer(layer); });
+      const sz = 16;
+      const icon = L.divIcon({
+        className:'',
+        html:`<div style="width:${sz}px;height:${sz}px;border-radius:50%;background:#d4755a;border:2.5px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);animation:pulse 1.5s infinite;"></div>`,
+        iconSize:[sz,sz], iconAnchor:[sz/2,sz/2]
+      });
+      const marker = L.marker([pos.lat, pos.lng], {icon}).addTo(map)
+        .bindPopup(`<b style="font-family:Lora,serif;color:#1a5566;">⛵ ${pos.name}</b><br><span style="font-size:0.8rem;color:#888;">Position actuelle</span>`);
+      marker._isCurrentMarker = true;
+    }
+
+    // Fuseau horaire auto selon longitude
+    const tzMap = [
+      { minLng:-180, maxLng:-112, tz:'Pacific/Marquesas' },
+      { minLng:-112, maxLng:-75,  tz:'America/Panama' },
+      { minLng:-75,  maxLng:-55,  tz:'America/Martinique' },
+      { minLng:-55,  maxLng:-10,  tz:'Atlantic/Cape_Verde' },
+      { minLng:-10,  maxLng:30,   tz:'Atlantic/Canary' },
+    ];
+    const found = tzMap.find(t => pos.lng >= t.minLng && pos.lng < t.maxLng);
+    if (found) BOAT_TIMEZONE = found.tz;
+  }
+
+  // SYSTÈME D'ARTICLES (Supabase)
+  const SKIPPER_PASSWORD = 'carpediem2026';
+  let isSkipper = false;
+  let articles = [];
+
+  async function loadArticles() {
+    try {
+      articles = await supaGet('articles');
+      renderArticles();
+    } catch(e) { console.error(e); }
+  }
+
+  function skipperLogin() {
+    const pwd = prompt('Mot de passe skipper :');
+    if (pwd === SKIPPER_PASSWORD) {
+      isSkipper = true;
+      document.getElementById('publish-zone').style.display = 'block';
+      document.getElementById('skipper-login').style.display = 'none';
+      // Affiche le bouton dauphin
+      const dolphinBtn = document.getElementById('dolphinBtn');
+      if (dolphinBtn) dolphinBtn.classList.add('skipper-visible');
+    } else if (pwd !== null) {
+      alert('Mot de passe incorrect');
+    }
+  }
+
+  async function publishArticle() {
+    const title  = document.getElementById('pub-title').value.trim();
+    const tag    = document.getElementById('pub-tag').value;
+    const text   = document.getElementById('pub-text').value.trim();
+    const photo  = document.getElementById('pub-photo').value.trim();
+    const escale = document.getElementById('pub-escale').value;
+    if (!title || !text) { alert('Remplis le titre et le texte !'); return; }
+
+    const btn = document.getElementById('btn-publish');
+    if (btn) { btn.disabled = true; btn.textContent = 'Publication…'; }
+
+    try {
+      const now = new Date().toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' });
+      await supaInsert('articles', { title, tag, text, photo, escale, date: now });
+      notifySubscribers(title, text);
+
+      if (photo) {
+        await supaInsert('gallery', { src: photo, caption: title, date: now, escale });
+        await loadGallery();
+        if (escale) await loadEscalePhotos(escale);
+      }
+
+      document.getElementById('pub-title').value = '';
+      document.getElementById('pub-photo').value = '';
+      document.getElementById('pub-escale').value = '';
+      document.getElementById('pub-text').value = '';
+      await loadArticles();
+      alert('✅ Article publié !');
+    } catch(e) {
+      alert('❌ Erreur : ' + e.message);
+    }
+
+    if (btn) { btn.disabled = false; btn.textContent = 'Publier ⛵'; }
+  }
+
+  async function deleteArticle(id) {
+    if (!isSkipper || !confirm('Supprimer cet article ?')) return;
+    await supaDelete('articles', id);
+    await loadArticles();
+  }
+
+  const banners = ['bg-ocean','bg-sunset','bg-island','bg-night'];
+  const bannerEmojis = { 'bg-ocean':'🌊', 'bg-sunset':'🌅', 'bg-island':'🏝️', 'bg-night':'🌟' };
+
+  function renderArticles() {
+    const list = document.getElementById('articles-list');
+    if (!list) return;
+    if (!articles || articles.length === 0) {
+      list.innerHTML = '<p style="text-align:center;color:var(--text-light);font-style:italic;padding:2rem 0;">Les articles arriveront au fil des escales ⛵</p>';
+      return;
+    }
+    list.innerHTML = articles.map((a, i) => {
+      const bg = banners[i % banners.length];
+      const emoji = bannerEmojis[bg];
+      const shortText = a.text && a.text.length > 200 ? a.text.slice(0, 200) + '…' : a.text;
+      const banner = a.photo
+        ? `<div class="card-banner" style="padding:0;overflow:hidden;height:200px;"><img src="${a.photo}" style="width:100%;height:100%;object-fit:cover;" alt="${a.title}"/></div>`
+        : `<div class="card-banner ${bg}">${emoji}</div>`;
+      return `
+        <article class="article-card">
+          ${banner}
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="card-date">${a.date}</span>
+              <span class="card-tag">${a.tag}</span>
+              ${isSkipper ? `<button onclick="deleteArticle(${a.id})" style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--coral);font-size:0.8rem;">🗑️</button>` : ''}
+            </div>
+            <h2>${a.title}</h2>
+            <p>${shortText}</p>
+            ${a.text && a.text.length > 200 ? `<a class="read-more" href="#" onclick="expandArticle(${a.id},this);return false;">Lire la suite →</a>` : ''}
+          </div>
+        </article>`;
+    }).join('');
+  }
+
+  function expandArticle(id, el) {
+    const a = articles.find(x => x.id === id);
+    if (!a) return;
+    el.previousElementSibling.textContent = a.text;
+    el.remove();
+  }
+
+  loadArticles();
+
+  // ESTIMATIONS D'ARRIVÉE
+  const SPEED_KNOTS = 7;
+
+  const etaWaypoints = [
+    {
+      name: 'Cap-Vert 🇨🇻',
+      emoji: '🏝️',
+      dist: 850,
+      depart: new Date('2026-09-03'),
+      sejour: '',
+    },
+    {
+      name: 'Antilles 🌴',
+      emoji: '🌴',
+      dist: 2100,
+      depart: new Date('2026-11-15'),
+      sejour: 'Plusieurs îles — mises à jour au fil du voyage',
+    },
+    {
+      name: 'Panama 🇵🇦',
+      emoji: '🚢',
+      dist: 1100,
+      depart: new Date('2027-04-01'),
+      sejour: '',
+    },
+    {
+      name: 'Marquises 🌺',
+      emoji: '🌺',
+      dist: 4200,
+      depart: new Date('2027-04-15'),
+      sejour: '',
+    },
+  ];
+
+  function calcETA(departDate, distNm) {
+    const heures = distNm / SPEED_KNOTS;
+    const jours = Math.round(heures / 24);
+    const arrivee = new Date(departDate);
+    arrivee.setDate(arrivee.getDate() + jours);
+    const dateStr = arrivee.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+    return { jours, dateStr };
+  }
+
+  function renderETA() {
+    const grid = document.getElementById('etaGrid');
+    if (!grid) return;
+    grid.innerHTML = `<div style="grid-column:1/-1;font-size:0.82rem;opacity:0.75;margin-bottom:0.5rem;">📅 Estimations à 7 nœuds de moyenne</div>` +
+    etaWaypoints.map(wp => {
+      const { jours } = calcETA(wp.depart, wp.dist);
+      return `
+        <div class="eta-item">
+          <div class="eta-dest">${wp.emoji} ${wp.name}</div>
+          <div class="eta-distance">~${wp.dist.toLocaleString('fr-FR')} milles depuis l'escale précédente</div>
+          <div class="eta-days">${jours} jour${jours>1?'s':''} de mer${wp.sejour ? ' · '+wp.sejour : ''}</div>
+        </div>`;
+    }).join('');
+  }
+
+  renderETA();
+
+  // MÉTÉO (position actuelle : Cap-Vert)
+  async function loadWeather() {
+    const lat = 28.42, lon = -13.85;
+    const key = 'a55e75fa1f63be939d38d3f9cba0ed43';
+    try {
+      const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${key}&units=metric&lang=fr`);
+      const d = await res.json();
+      const windKnots = (d.wind.speed * 1.94384).toFixed(0);
+      const windDir = degToDir(d.wind.deg);
+      const windGustKnots = d.wind.gust ? (d.wind.gust * 1.94384).toFixed(0) : null;
+      const desc = d.weather[0].description;
+      const icon = weatherIcon(d.weather[0].id);
+      const temp = Math.round(d.main.temp);
+      const tempRessentie = Math.round(d.main.feels_like);
+      const humid = d.main.humidity;
+      const pression = d.main.pressure;
+      const visib = d.visibility ? (d.visibility / 1000).toFixed(1) : null;
+      const beaufort = knToBeaufort(parseFloat(windKnots));
+
+      document.getElementById('weatherBar').innerHTML = `
+        <div class="weather-location">📍 Météo à ma position — Fuerteventura, Canaries</div>
+        <div class="weather-items">
+          <div class="weather-item">
+            <span class="weather-icon">${icon}</span>
+            <div><div class="weather-val">${temp}°C</div><div class="weather-lbl">Temp. (ressenti ${tempRessentie}°C)</div></div>
+          </div>
+          <div class="weather-item">
+            <span class="weather-icon">💨</span>
+            <div><div class="weather-val">${windKnots} nœuds ${windDir}</div><div class="weather-lbl">Vent${windGustKnots ? ` (rafales ${windGustKnots} nœuds)` : ''} · Beaufort ${beaufort}</div></div>
+          </div>
+          <div class="weather-item">
+            <span class="weather-icon">💧</span>
+            <div><div class="weather-val">${humid}%</div><div class="weather-lbl">Humidité</div></div>
+          </div>
+          <div class="weather-item">
+            <span class="weather-icon">🌡️</span>
+            <div><div class="weather-val">${pression} hPa</div><div class="weather-lbl">Pression</div></div>
+          </div>
+          ${visib ? `<div class="weather-item"><span class="weather-icon">👁️</span><div><div class="weather-val">${visib} km</div><div class="weather-lbl">Visibilité</div></div></div>` : ''}
+          <div class="weather-desc">${desc.charAt(0).toUpperCase()+desc.slice(1)}</div>
+        </div>`;
+    } catch(e) {
+      document.getElementById('weatherBar').innerHTML = '<div class="weather-loading">Météo indisponible</div>';
+    }
+  }
+
+  function knToBeaufort(kn) {
+    if (kn < 1) return 0;
+    if (kn < 4) return 1;
+    if (kn < 7) return 2;
+    if (kn < 11) return 3;
+    if (kn < 17) return 4;
+    if (kn < 22) return 5;
+    if (kn < 28) return 6;
+    if (kn < 34) return 7;
+    if (kn < 41) return 8;
+    if (kn < 48) return 9;
+    if (kn < 56) return 10;
+    if (kn < 64) return 11;
+    return 12;
+  }
+
+  function degToDir(deg) {
+    const dirs = ['N','NE','E','SE','S','SO','O','NO'];
+    return dirs[Math.round(deg/45)%8];
+  }
+
+  function weatherIcon(id) {
+    if (id >= 200 && id < 300) return '⛈️';
+    if (id >= 300 && id < 400) return '🌦️';
+    if (id >= 500 && id < 600) return '🌧️';
+    if (id >= 600 && id < 700) return '❄️';
+    if (id >= 700 && id < 800) return '🌫️';
+    if (id === 800) return '☀️';
+    if (id === 801) return '🌤️';
+    if (id <= 804) return '⛅';
+    return '🌡️';
+  }
+
+  loadWeather();
+
+  // TIMELINE
+  const timelineSteps = [
+    { name:'Fuerteventura', emoji:'🌋', date:'3 sept. 2026', dist:'Départ', status:'current', photo:null },
+    { name:'Cap-Vert', emoji:'🏝️', date:'à définir', dist:'~850 milles', status:'future', photo:null },
+    { name:'Antilles', emoji:'🌴', date:'à définir', dist:'~2 950 milles', status:'future', photo:null },
+    { name:'Panama', emoji:'🚢', date:'à définir', dist:'~4 050 milles', status:'future', photo:null },
+    { name:'Polynésie', emoji:'🌺', date:'à définir', dist:'~8 250 milles', status:'future', photo:null },
+  ];
+
+  function renderTimeline() {
+    const track = document.getElementById('timelineTrack');
+    if (!track) return;
+    track.innerHTML = timelineSteps.map((step, i) => `
+      <div class="timeline-step">
+        <div class="timeline-dot ${step.status}"></div>
+        <div class="timeline-card">
+          ${step.photo
+            ? `<img src="${step.photo}" class="timeline-photo" alt="${step.name}"/>`
+            : `<div class="timeline-photo">${step.emoji}</div>`}
+          <div class="timeline-name">${step.emoji} ${step.name}</div>
+          <div class="timeline-date">📅 ${step.date}</div>
+          <div class="timeline-dist">📏 ${step.dist}</div>
+        </div>
+      </div>
+      ${i < timelineSteps.length - 1 ? '<div class="timeline-connector"></div>' : ''}
+    `).join('');
+  }
+
+  renderTimeline();
+
+  // ESCALES
+  const escalesMaps = {};
+
+  function showEscale(id) {
+    document.querySelectorAll('.escale-panel').forEach(p => p.classList.add('hidden'));
+    document.querySelectorAll('.escale-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('escale-' + id).classList.remove('hidden');
+    event.currentTarget.classList.add('active');
+    // Init carte si pas encore fait
+    setTimeout(() => {
+      if (!escalesMaps[id]) {
+        initEscaleMap(id);
+      } else {
+        escalesMaps[id].invalidateSize();
+      }
+      loadEscaleArticles(id);
+    }, 150);
+  }
+
+  const escaleDefs = {
+    canaries:   { lat: 28.42,  lng: -13.85, zoom: 10 },
+    capvert:    { lat: 16.89,  lng: -24.99, zoom: 11 },
+    martinique: { lat: 14.60,  lng: -61.08, zoom: 11 },
+    panama:     { lat: 9.00,   lng: -79.50, zoom: 10 },
+    marquises:  { lat: -9.80,  lng: -139.05, zoom: 10 },
+  };
+
+  function initEscaleMap(id) {
+    const def = escaleDefs[id];
+    if (!def || !document.getElementById('map-' + id)) return;
+    const m = L.map('map-' + id, { zoomControl: false, scrollWheelZoom: false })
+               .setView([def.lat, def.lng], def.zoom);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      attribution: '© OpenStreetMap © CARTO', maxZoom: 18
+    }).addTo(m);
+    L.circleMarker([def.lat, def.lng], {
+      radius: 8, fillColor: '#d4755a', color: 'white', weight: 2, fillOpacity: 1
+    }).addTo(m);
+    escalesMaps[id] = m;
+    loadEscaleMeteo(id, def.lat, def.lng);
+  }
+
+  async function loadEscaleMeteo(id, lat, lon) {
+    const key = 'a55e75fa1f63be939d38d3f9cba0ed43';
+    const container = document.getElementById('meteo-' + id);
+    if (!container) return;
+    try {
+      const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${key}&units=metric&lang=fr`);
+      const d = await res.json();
+      const wind = (d.wind.speed * 1.94384).toFixed(0);
+      const dir = degToDir(d.wind.deg);
+      const temp = Math.round(d.main.temp);
+      const icon = weatherIcon(d.weather[0].id);
+      const desc = d.weather[0].description;
+      container.innerHTML = `
+        <div style="font-size:0.8rem;opacity:0.75;margin-bottom:0.5rem;">🌡️ Météo actuelle</div>
+        <div style="font-size:1.8rem;margin-bottom:0.3rem;">${icon}</div>
+        <div class="escale-meteo-row">
+          <div class="escale-meteo-item"><strong>${temp}°C</strong><small>Temp.</small></div>
+          <div class="escale-meteo-item"><strong>${wind} nœuds</strong><small>Vent ${dir}</small></div>
+          <div class="escale-meteo-item"><strong>${d.main.humidity}%</strong><small>Humidité</small></div>
+        </div>
+        <div style="font-style:italic;font-size:0.82rem;opacity:0.8;margin-top:0.6rem;">${desc.charAt(0).toUpperCase()+desc.slice(1)}</div>`;
+    } catch(e) {
+      if (container) container.innerHTML = '<div class="escale-meteo-loading">Météo indisponible</div>';
+    }
+  }
+
+  // Init carte Canaries par défaut - attendre que Leaflet soit chargé
+  // JOURNAL MÉTÉO — 5 derniers jours via forecast API
+  async function loadMeteoJournal() {
+    const lat = 28.42, lon = -13.85;
+    const key = 'a55e75fa1f63be939d38d3f9cba0ed43';
+    const container = document.getElementById('meteoJournal');
+    try {
+      const res = await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${key}&units=metric&lang=fr&cnt=40`);
+      const d = await res.json();
+
+      // Groupe par jour (midi de chaque jour)
+      const days = {};
+      d.list.forEach(item => {
+        const date = item.dt_txt.split(' ')[0];
+        const hour = item.dt_txt.split(' ')[1];
+        if (hour === '12:00:00' || !days[date]) days[date] = item;
+      });
+
+      const rows = Object.entries(days).slice(0, 7).map(([dateStr, item]) => {
+        const date = new Date(dateStr);
+        const label = date.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' });
+        const wind = (item.wind.speed * 1.94384).toFixed(0);
+        const dir = degToDir(item.wind.deg);
+        const temp = Math.round(item.main.temp);
+        const icon = weatherIcon(item.weather[0].id);
+        const desc = item.weather[0].description;
+        const desc2 = desc.charAt(0).toUpperCase() + desc.slice(1);
+
+        return `
+          <div class="meteo-row">
+            <div class="meteo-date">${label}</div>
+            <div class="meteo-icon">${icon}</div>
+            <div class="meteo-val"><strong>${temp}°C</strong><span>Temp.</span></div>
+            <div class="meteo-val"><strong>${wind} nœuds ${dir}</strong><span>Vent</span></div>
+            <div class="meteo-desc">${desc2}</div>
+          </div>`;
+      }).join('');
+
+      container.innerHTML = `<div class="meteo-grid">${rows}</div>`;
+    } catch(e) {
+      container.innerHTML = '<p style="text-align:center;color:var(--text-light);font-style:italic;padding:2rem 0;">Données météo indisponibles</p>';
+    }
+  }
+
+  loadMeteoJournal();
+
+  // NOTIFICATIONS EMAIL via Netlify Functions + Brevo
+  async function subscribe() {
+    const email = document.getElementById('sub-email').value.trim();
+    if (!email || !email.includes('@')) { alert('Entre un email valide !'); return; }
+    try {
+      const res = await fetch('/.netlify/functions/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      if (res.ok) {
+        document.getElementById('sub-email').value = '';
+        document.getElementById('sub-success').style.display = 'block';
+        document.getElementById('sub-error').style.display = 'none';
+      } else {
+        document.getElementById('sub-error').style.display = 'block';
+      }
+    } catch(e) {
+      document.getElementById('sub-error').style.display = 'block';
+    }
+  }
+
+  async function notifySubscribers(title, text) {
+    try {
+      await fetch('/.netlify/functions/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, text })
+      });
+    } catch(e) { console.error('Notify error:', e); }
+  }
+
+  // COMPTEUR DE DAUPHINS
+  async function loadDolphins() {
+    try {
+      const data = await supaGet('dolphins');
+      if (data && data[0]) {
+        document.getElementById('dolphinCount').textContent = data[0].count || 0;
+        if (data[0].last_seen) {
+          document.getElementById('dolphinLast').textContent = '🕐 Dernier : ' + data[0].last_seen;
+        }
+      }
+    } catch(e) {}
+  }
+
+  async function addDolphin() {
+    if (!isSkipper) return;
+    const btn = document.getElementById('dolphinBtn');
+    btn.disabled = true;
+    try {
+      const data = await supaGet('dolphins');
+      const now = new Date().toLocaleDateString('fr-FR', {day:'numeric',month:'long',year:'numeric'});
+      const current = (data && data.length > 0) ? (parseInt(data[0].count) || 0) : 0;
+      const newCount = current + 1;
+
+      if (data && data.length > 0) {
+        // Supprime l'ancienne ligne et en crée une nouvelle
+        await fetch(`${SUPABASE_URL}/rest/v1/dolphins?id=eq.${data[0].id}`, {
+          method: 'DELETE',
+          headers: {'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}
+        });
+      }
+      await supaInsert('dolphins', { count: newCount, last_seen: now });
+      document.getElementById('dolphinCount').textContent = newCount;
+      document.getElementById('dolphinLast').textContent = '🕐 Dernier : ' + now;
+
+      // Animation
+      const emoji = document.querySelector('.dolphin-emoji');
+      emoji.style.transform = 'scale(1.5) rotate(20deg)';
+      setTimeout(() => emoji.style.transform = '', 500);
+
+    } catch(e) { console.error('Dolphin error:', e); }
+    btn.disabled = false;
+  }
+
+  loadDolphins();
+
+  // HEURE LOCALE
+  let BOAT_TIMEZONE = 'Atlantic/Canary';
+
+  function updateClocks() {
+    const now = new Date();
+    const fmt = (tz) => now.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit', second:'2-digit', timeZone: tz });
+    const zone = (tz) => now.toLocaleDateString('fr-FR', { timeZoneName:'short', timeZone: tz }).split(' ').pop();
+    const h = document.getElementById('time-home');
+    const b = document.getElementById('time-boat');
+    const bz = document.getElementById('time-boat-zone');
+    const u = document.getElementById('time-utc');
+    if (h) h.textContent = fmt('Europe/Paris');
+    if (b) b.textContent = fmt(BOAT_TIMEZONE);
+    if (bz) bz.textContent = '(' + zone(BOAT_TIMEZONE) + ')';
+    if (u) u.textContent = fmt('UTC');
+  }
+
+  // BANNIÈRE DÉPART
+  const DEPART_DATE = new Date("2026-09-03T06:00:00");
+
+  function updateDepartBanner() {
+    const now = new Date();
+    const banner = document.getElementById('departBanner');
+    if (!banner) return;
+
+    if (now < DEPART_DATE) {
+      // Compte à rebours
+      const diff = DEPART_DATE - now;
+      const jours  = Math.floor(diff / (1000*60*60*24));
+      const heures = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
+      const mins   = Math.floor((diff % (1000*60*60)) / (1000*60));
+      const secs   = Math.floor((diff % (1000*60)) / 1000);
+      banner.innerHTML = `
+        <div class="depart-title">⛵ Départ de Fuerteventura le 3 septembre 2026 — compte à rebours</div>
+        <div class="depart-before">
+          <div class="depart-unit"><span class="depart-val" id="cd-j">${jours}</span><div class="depart-lbl">Jours</div></div>
+          <div class="depart-sep">:</div>
+          <div class="depart-unit"><span class="depart-val" id="cd-h">${String(heures).padStart(2,'0')}</span><div class="depart-lbl">Heures</div></div>
+          <div class="depart-sep">:</div>
+          <div class="depart-unit"><span class="depart-val" id="cd-m">${String(mins).padStart(2,'0')}</span><div class="depart-lbl">Minutes</div></div>
+          <div class="depart-sep">:</div>
+          <div class="depart-unit"><span class="depart-val" id="cd-s">${String(secs).padStart(2,'0')}</span><div class="depart-lbl">Secondes</div></div>
+        </div>`;
+    } else {
+      // Jours depuis le départ
+      const diff = now - DEPART_DATE;
+      const jours = Math.floor(diff / (1000*60*60*24));
+      const heures = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
+      banner.innerHTML = `
+        <div class="depart-title">⛵ En mer depuis le 3 septembre 2026</div>
+        <div class="depart-after">
+          <div>
+            <span class="depart-after-val">${jours}</span>
+            <span class="depart-after-lbl"> jours</span>
+          </div>
+          <div style="opacity:0.3;font-size:1.5rem;">·</div>
+          <div>
+            <span class="depart-after-val">${heures}</span>
+            <span class="depart-after-lbl"> heures de voyage</span>
+          </div>
+          <div style="opacity:0.3;font-size:1.5rem;">·</div>
+          <div style="font-style:italic;opacity:0.8;font-size:0.9rem;">Bon vent ! 🌊</div>
+        </div>`;
+    }
+  }
+
+  updateDepartBanner();
+  setInterval(updateDepartBanner, 1000);
+
+  // SCROLL ANIMATIONS
+  function initScrollAnimations() {
+    const sections = document.querySelectorAll('section, .about-box, .article-card, .position-card, .comment-form, .converter-card, .glossaire-item, .timeline-card, .escale-body');
+    sections.forEach((el, i) => {
+      if (i % 3 === 0) el.classList.add('scroll-reveal');
+      else if (i % 3 === 1) el.classList.add('scroll-reveal-left');
+      else el.classList.add('scroll-reveal-right');
+    });
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.scroll-reveal, .scroll-reveal-left, .scroll-reveal-right').forEach(el => observer.observe(el));
+  }
+
+  // GLOSSAIRE
+  const glossaire = [
+    { term:'Alizé', def:'Vent régulier soufflant des zones subtropicales vers l\'équateur. Principal vent utilisé pour les traversées atlantiques.' },
+    { term:'Amure', def:'Côté du bateau d\'où vient le vent. Amure tribord = le vent vient de droite.' },
+    { term:'Bâbord', def:'Côté gauche du bateau quand on regarde vers l\'avant. Symbole : feu rouge.' },
+    { term:'Tribord', def:'Côté droit du bateau quand on regarde vers l\'avant. Symbole : feu vert.' },
+    { term:'Beaufort', def:'Échelle de 0 à 12 mesurant la force du vent. 4 = jolie brise, 7 = grand frais, 10 = tempête.' },
+    { term:'Cap', def:'Direction dans laquelle pointe le bateau, exprimée en degrés (0-360°).' },
+    { term:'Dérive', def:'Décalage du bateau par rapport à sa route, causé par le vent ou le courant.' },
+    { term:'Empanner', def:'Manœuvre qui consiste à faire passer le vent d\'un bord à l\'autre par l\'arrière du bateau.' },
+    { term:'Étrave', def:'Partie avant de la coque, là où elle coupe l\'eau.' },
+    { term:'Gîte', def:'Inclinaison latérale du bateau sous l\'effet du vent.' },
+    { term:'Houle', def:'Ondulation longue de la mer, distincte des vagues. Peut atteindre plusieurs mètres en océan.' },
+    { term:'Largue', def:'Allure de navigation où le vent vient de côté ou légèrement de l\'arrière. Allure rapide et confortable.' },
+    { term:'Loch', def:'Instrument mesurant la vitesse et la distance parcourue par le bateau.' },
+    { term:'Mille nautique', def:'Unité de distance maritime = 1 852 mètres. Correspond à une minute d\'arc de latitude.' },
+    { term:'Mouillage', def:'Zone où l\'on peut jeter l\'ancre pour s\'arrêter. "Être au mouillage" = être ancré.' },
+    { term:'Nœud', def:'Unité de vitesse maritime = 1 mille nautique par heure ≈ 1,85 km/h.' },
+    { term:'Quart', def:'Période de veille à bord, généralement de 3 ou 4 heures. Les équipiers se relaient pour surveiller le bateau.' },
+    { term:'Route', def:'Direction réellement suivie par le bateau, tenant compte de la dérive.' },
+    { term:'Sillage', def:'Trace laissée dans l\'eau derrière le bateau.' },
+    { term:'Virement de bord', def:'Manœuvre faisant passer le vent d\'un côté à l\'autre par l\'avant du bateau.' },
+    { term:'Veille', def:'Surveillance permanente de l\'horizon, des instruments et de la météo en mer.' },
+    { term:'ITCZ', def:'Zone de convergence intertropicale, aussi appelée "pot au noir". Zone de calmes et d\'orages à traverser pour rejoindre l\'Atlantique Sud.' },
+  ];
+
+  function renderGlossaire(filter = '') {
+    const grid = document.getElementById('glossaireGrid');
+    grid.innerHTML = glossaire
+      .filter(g => g.term.toLowerCase().includes(filter.toLowerCase()) || g.def.toLowerCase().includes(filter.toLowerCase()))
+      .map(g => `
+        <div class="glossaire-item">
+          <div class="glossaire-term">${g.term}</div>
+          <div class="glossaire-def">${g.def}</div>
+        </div>`)
+      .join('');
+  }
+
+  function filterGlossaire() {
+    renderGlossaire(document.getElementById('glossaire-search').value);
+  }
+
+  renderGlossaire();
+
+  // CONVERTISSEUR
+  function convertMiles() {
+    const v = parseFloat(document.getElementById('miles-in').value);
+    document.getElementById('miles-out').textContent = isNaN(v) ? '— km' : `${(v * 1.852).toFixed(1)} km`;
+  }
+  function convertKnots() {
+    const v = parseFloat(document.getElementById('knots-in').value);
+    document.getElementById('knots-out').textContent = isNaN(v) ? '— km/h' : `${(v * 1.852).toFixed(1)} km/h`;
+  }
+  function convertBeaufort() {
+    const v = parseInt(document.getElementById('bft-in').value);
+    const labels = ['Calme','Très légère brise','Légère brise','Petite brise','Jolie brise','Bonne brise','Vent frais','Grand frais','Coup de vent','Fort coup de vent','Tempête','Violente tempête','Ouragan'];
+    const knots = ['< 1 nœud','1-3 nœuds','4-6 nœuds','7-10 nœuds','11-16 nœuds','17-21 nœuds','22-27 nœuds','28-33 nœuds','34-40 nœuds','41-47 nœuds','48-55 nœuds','56-63 nœuds','≥ 64 nœuds'];
+    if (isNaN(v) || v < 0 || v > 12) { document.getElementById('bft-out').textContent = '—'; return; }
+    document.getElementById('bft-out').textContent = `${labels[v]} — ${knots[v]}`;
+  }
+  function convertTravee() {
+    const v = parseFloat(document.getElementById('trav-in').value);
+    if (isNaN(v)) { document.getElementById('trav-out').textContent = '— jours (à 7 nœuds)'; return; }
+    const jours = v / (7 * 24);
+    document.getElementById('trav-out').textContent = `~${jours.toFixed(1)} jours (à 7 nœuds)`;
+  }
+
+  // SWITCH CARTE / WINDY
+  function switchMap(type) {
+    document.querySelectorAll('.map-tab').forEach(t => t.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    if (type === 'windy') {
+      document.getElementById('map-route-wrap').style.display = 'none';
+      document.getElementById('map-windy-wrap').style.display = 'block';
+    } else {
+      document.getElementById('map-route-wrap').style.display = 'block';
+      document.getElementById('map-windy-wrap').style.display = 'none';
+    }
+  }
+
+  // SMOOTH SCROLL
+  document.querySelectorAll('nav a').forEach(a=>{
+    a.addEventListener('click',e=>{e.preventDefault();document.querySelector(a.getAttribute('href')).scrollIntoView({behavior:'smooth'});});
+  });
+</script>
+
+<script>
+  const waypoints=[
+    {lat:28.42,lng:-13.85,name:"Départ — Fuerteventura 🇪🇸",status:"current"},
+    {lat:16.89,lng:-24.99,name:"Mindelo, Cap-Vert 🇨🇻",status:"next"},
+    {lat:14.60,lng:-61.08,name:"Martinique 🇲🇶",status:"future"},
+    {lat:9.00,lng:-79.50,name:"Canal de Panama 🇵🇦",status:"future"},
+    {lat:-9.80,lng:-139.05,name:"Marquises, Polynésie 🌺",status:"future"},
+  ];
+  let map;
+  function initMainMap() {
+    if (map) return;
+    try {
+      map=L.map('map',{zoomControl:true,scrollWheelZoom:false}).setView([15,-60],2);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{attribution:'© OpenStreetMap © CARTO',maxZoom:18}).addTo(map);
+      setTimeout(() => map.invalidateSize(), 500);
+      L.polyline(waypoints.map(w=>[w.lat,w.lng]),{color:'#aac4cc',weight:2,dashArray:'6,6'}).addTo(map);
+      waypoints.forEach(wp=>{
+        const colors={done:'#4a7c59',current:'#d4755a',next:'#2a7d8c',future:'#aaa'};
+        const sizes={done:10,current:16,next:10,future:8};
+        const col=colors[wp.status],sz=sizes[wp.status];
+        const icon=L.divIcon({className:'',html:`<div style="width:${sz}px;height:${sz}px;border-radius:50%;background:${col};border:2.5px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);${wp.status==='current'?'animation:pulse 1.5s infinite;':''}"></div>`,iconSize:[sz,sz],iconAnchor:[sz/2,sz/2]});
+        const popup=`<b style="font-family:Lora,serif;color:#1a5566;">${wp.name}</b><br><span style="font-size:0.8rem;color:#888;">${wp.status==='done'?'✅ Escale passée':wp.status==='current'?'⛵ Position actuelle':wp.status==='next'?'➡️ Prochaine escale':'🗺️ À venir'}</span>`;
+        L.marker([wp.lat,wp.lng],{icon}).addTo(map).bindPopup(popup);
+      });
+      const s=document.createElement('style');
+      s.textContent=`@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(212,117,90,0.5);}50%{box-shadow:0 0 0 8px rgba(212,117,90,0);}}`;
+      document.head.appendChild(s);
+    } catch(e) { console.error('Map init error:', e); }
+  }
+</script>
+</body>
+</html>
